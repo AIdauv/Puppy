@@ -25,10 +25,10 @@ bool Rasterizer::isInsideTriangle(const glm::vec2& p, const glm::vec2& v0,
 void Rasterizer::getBoundingBox(const glm::vec2& v0, const glm::vec2& v1, const glm::vec2& v2,
 	int& minX, int& minY, int& maxX, int& maxY) {
 
-	minX = static_cast<int>(std::floor(std::min(v0.x, v1.x, v2.x)));
-	minY = static_cast<int>(std::floor(std::min(v0.y, v1.y, v2.y)));
-	maxX = static_cast<int>(std::ceil(std::max(v0.x, v1.x, v2.x)));
-	maxY = static_cast<int>(std::ceil(std::max(v0.y, v1.y, v2.y)));
+	minX = static_cast<int>(std::floor(std::min(v0.x, std::min(v1.x, v2.x))));
+	minY = static_cast<int>(std::floor(std::min(v0.y, std::min(v1.y, v2.y))));
+	maxX = static_cast<int>(std::ceil(std::max(v0.x, std::max(v1.x, v2.x))));
+	maxY = static_cast<int>(std::ceil(std::max(v0.y, std::max(v1.y, v2.y))));
 
 	minX = std::max(0, minX);
 	minY = std::max(0, minY);

@@ -19,7 +19,7 @@ public:
 	int getWidth() { return width; }
 	int getHeight() { return height; }
 	uint32_t* getData() { return colorbuffer.data(); }
-	int getpitch() { return width * sizeof(uint32_t); }
+	int getPitch() { return width * sizeof(uint32_t); }
 
 	static uint32_t colorToUint32(glm::vec3 color);
 	static glm::vec3 uint32ToColor(uint32_t color);

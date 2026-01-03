@@ -30,6 +30,11 @@ project "Puppy"
         "SDL2main"
     }
 
+    postbuildcommands
+    {
+        '{COPY} "vendor/SDL2/lib/x64/SDL2.dll" "%{cfg.targetdir}/"'
+    }
+
     filter "system:windows"
         systemversion "latest"
 
