@@ -15,7 +15,7 @@ glm::vec3 Framebuffer::uint32ToColor(uint32_t color) {
 	float g = ((color >> 8) & 0xff) / 255.0f;
 	float b = (color & 0xff) / 255.0f;
 
-	return glm::vec3(r, g, b);
+	return { r, g, b };
 }
 
 void Framebuffer::clear(uint32_t color) {

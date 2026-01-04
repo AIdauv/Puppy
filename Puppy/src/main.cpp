@@ -1,6 +1,7 @@
 #include "Window.h"
 #include "Framebuffer.h"
 #include "Rasterizer.h"
+#include "Camera.h"
 #include <iostream>
 
 int main(int argc, char* argv[]) {
@@ -16,7 +17,6 @@ int main(int argc, char* argv[]) {
 
     // 3. 创建光栅化器
     Rasterizer rasterizer(framebuffer);
-
 
     std::cout << "软光栅化器 v0.1 启动" << std::endl;
     std::cout << "按ESC退出程序" << std::endl;
