@@ -3,6 +3,7 @@
 #include "Rasterizer.h"
 #include "Camera.h"
 #include <iostream>
+#include <chrono>
 
 int main(int argc, char* argv[]) {
     // 1. 创建窗口
@@ -18,32 +19,87 @@ int main(int argc, char* argv[]) {
     // 3. 创建光栅化器
     Rasterizer rasterizer(framebuffer);
 
+    // 4. 创建相机
+    Camera camera;
+    camera.setPosition({ 0.0f, 0.0f, 5.0f });
+    camera.setTarget({ 0.0f, 0.0f, 0.0f });
+    camera.setPerspective(0.1f, 
+        100.0f, 
+        45.0f, 
+        static_cast<float>(window.getWidth()) / window.getHeight());
+
+    // 5. 创建一些3D三角形进行测试
+     
+    // 逆时针三角形（正面朝镜头）
+    Triangle3D tri1;
+    tri1.v0 = Vertex3D(glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    tri1.v1 = Vertex3D(glm::vec3(1.0f, -1.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    tri1.v2 = Vertex3D(glm::vec3(0.0f, 1.0f, -2.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+    // 顺时针三角形（背面朝镜头）
+    Triangle3D tri2;
+    tri2.v0 = Vertex3D(glm::vec3(-0.5f, -0.5f, -0.75f), glm::vec3(1.0f, 1.0f, 0.0f));
+    tri2.v1 = Vertex3D(glm::vec3(0.0f, 0.5f, -1.5f), glm::vec3(1.0f, 0.0f, 1.0f));  // 注意：交换了顶点顺序
+    tri2.v2 = Vertex3D(glm::vec3(0.5f, -0.5f, -0.75f), glm::vec3(0.0f, 1.0f, 1.0f));
+    
+
     std::cout << "软光栅化器 v0.1 启动" << std::endl;
-    std::cout << "按ESC退出程序" << std::endl;
+    std::cout << "控制说明：" << std::endl;
+    std::cout << "  W/S - 前后移动" << std::endl;
+    std::cout << "  A/D - 左右移动" << std::endl;
+    std::cout << "  Q/E - 上下移动" << std::endl;
+    std::cout << "  鼠标左键 + 拖动 - 旋转视角" << std::endl;
+    std::cout << "  ESC - 退出程序" << std::endl;
+
+    // 用于帧时间计算
+    auto lastTime = std::chrono::high_resolution_clock::now();
 
     // 主循环
     while (window.isRunning()) {
+        // 计算帧时间
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        float deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
+        lastTime = currentTime;
+
         // 处理事件
         window.handleEvents();
 
+        // 获取输入状态
+        const auto& input = window.getInputState();
+
+        // 相机控制
+        float moveSpeed = 3.0f * deltaTime;
+        float rotateSpeed = 50.0f * deltaTime;
+
+        // 移动相机
+        if (input.keyW) camera.moveForward(moveSpeed);
+        if (input.keyS) camera.moveForward(-moveSpeed);
+        if (input.keyA) camera.moveRight(-moveSpeed);
+        if (input.keyD) camera.moveRight(moveSpeed);
+        if (input.keyQ) camera.moveUp(moveSpeed);
+        if (input.keyE) camera.moveUp(-moveSpeed);
+
+        // 旋转相机（使用鼠标）
+        if (input.mouseLeft) {
+            float mouseSensitivity = 0.1f;
+            float yaw = -input.mouseDeltaX * mouseSensitivity;
+            float pitch = -input.mouseDeltaY * mouseSensitivity;
+            camera.rotate(yaw, pitch);
+        }
+
         // 清屏（黑色）
         framebuffer.clear(0xFF000000);  // ARGB: 黑色
+        framebuffer.clearDepth();
+
+
 
         // 绘制所有三角形
-            rasterizer.drawTriangle2D(glm::vec2(200, 200),
-                glm::vec2(150, 100),
-                glm::vec2(250, 100),
-                glm::vec3(1.0f, 0.0f, 0.0f));
 
-            rasterizer.drawTriangle2D(glm::vec2(600, 200),
-                glm::vec2(550, 100),
-                glm::vec2(650, 100),
-                glm::vec3(0.0f, 1.0f, 0.0f));
+        rasterizer.drawTriangle3D(tri1, camera.getViewMatrix(), camera.getProjectionMatrix(), 
+            MathUtils::CullingMode::NONE);
+        rasterizer.drawTriangle3D(tri2, camera.getViewMatrix(), camera.getProjectionMatrix(), 
+            MathUtils::CullingMode::NONE);
 
-            rasterizer.drawTriangle2D(glm::vec2(300, 200),
-                glm::vec2(500, 200),
-                glm::vec2(400, 300),
-                glm::vec3(0.0f, 0.0f, 1.0f));
 
         // 绘制一些调试信息
         framebuffer.setPixel(10, 10, glm::vec3(1, 1, 1));  // 左上角白点
@@ -53,8 +109,6 @@ int main(int argc, char* argv[]) {
         window.updateTexture(framebuffer.getData(), framebuffer.getPitch());
         window.render();
 
-        // 简单帧率控制（约60FPS）
-        SDL_Delay(16);
     }
 
     std::cout << "程序正常退出" << std::endl;

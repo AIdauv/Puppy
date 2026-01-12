@@ -1,6 +1,6 @@
 #include "Rasterizer.h"
 
-bool Rasterizer::isInsideTriangle(const glm::vec2& p, const glm::vec2& v0,
+bool Rasterizer::isInsideTriangle2D(const glm::vec2& p, const glm::vec2& v0,
 	const glm::vec2& v1, const glm::vec2& v2) {
 
 	auto cross = [](const glm::vec2& a, const glm::vec2& b) {
@@ -22,13 +22,14 @@ bool Rasterizer::isInsideTriangle(const glm::vec2& p, const glm::vec2& v0,
 	return (c0 >= 0 && c1 >= 0 && c2 >= 0) || (c0 <= 0 && c1 <= 0 && c2 <= 0);
 }
 
-void Rasterizer::getBoundingBox(const glm::vec2& v0, const glm::vec2& v1, const glm::vec2& v2,
+template<typename VecType>
+void Rasterizer::getBoundingBox(const VecType& v0, const VecType& v1, const VecType& v2,
 	int& minX, int& minY, int& maxX, int& maxY) {
 
-	minX = static_cast<int>(std::floor(std::min(v0.x, std::min(v1.x, v2.x))));
-	minY = static_cast<int>(std::floor(std::min(v0.y, std::min(v1.y, v2.y))));
-	maxX = static_cast<int>(std::ceil(std::max(v0.x, std::max(v1.x, v2.x))));
-	maxY = static_cast<int>(std::ceil(std::max(v0.y, std::max(v1.y, v2.y))));
+	minX = static_cast<int>(std::floor(std::min({ v0.x, v1.x, v2.x })));
+	minY = static_cast<int>(std::floor(std::min({ v0.y, v1.y, v2.y })));
+	maxX = static_cast<int>(std::ceil(std::max({ v0.x, v1.x, v2.x })));
+	maxY = static_cast<int>(std::ceil(std::max({ v0.y, v1.y, v2.y })));
 
 	minX = std::max(0, minX);
 	minY = std::max(0, minY);
@@ -49,10 +50,90 @@ void Rasterizer::drawTriangle2D(const glm::vec2& v0, const glm::vec2& v1,
 			float px = x + 0.5f;
 			float py = y + 0.5f;
 
-			if (isInsideTriangle(glm::vec2(px, py), v0, v1, v2)) {
+			if (isInsideTriangle2D(glm::vec2(px, py), v0, v1, v2)) {
 				framebuffer.setPixel(x, y, color);
 			}
 		}
 	}
+
+}
+
+void Rasterizer::drawTriangle3D(const Triangle3D& tri, const glm::mat4& viewMat,
+	const glm::mat4& projectionMat, MathUtils::CullingMode cullMode) {
+
+	Vertex3D v0 = tri.v0;
+	Vertex3D v1 = tri.v1;
+	Vertex3D v2 = tri.v2;
+
+	glm::vec4 viewV0 = viewMat * glm::vec4(v0.position, 1);
+	glm::vec4 viewV1 = viewMat * glm::vec4(v1.position, 1);
+	glm::vec4 viewV2 = viewMat * glm::vec4(v2.position, 1);
+
+	if (MathUtils::isCulled(glm::vec3(viewV0), 
+		glm::vec3(viewV1), 
+		glm::vec3(viewV2), 
+		cullMode)) {
+		return;
+	}
+
+	glm::vec4 clipV0 = projectionMat * viewV0;
+	glm::vec4 clipV1 = projectionMat * viewV1;
+	glm::vec4 clipV2 = projectionMat * viewV2;
+	
+	glm::vec4 ndcV0 = clipV0 / clipV0.w;
+	glm::vec4 ndcV1 = clipV1 / clipV1.w;
+	glm::vec4 ndcV2 = clipV2 / clipV2.w;
+
+	int width = framebuffer.getWidth();
+	int height = framebuffer.getHeight();
+
+	glm::vec3 screenV0 = MathUtils::viewportTransform(glm::vec3(ndcV0), width, height);
+	glm::vec3 screenV1 = MathUtils::viewportTransform(glm::vec3(ndcV1), width, height);
+	glm::vec3 screenV2 = MathUtils::viewportTransform(glm::vec3(ndcV2), width, height);
+
+	int minX, minY, maxX, maxY;
+	getBoundingBox(screenV0, screenV1, screenV2, minX, minY, maxX, maxY);
+
+	for (int x = minX; x <= maxX; ++x) {
+		for (int y = minY; y <= maxY; ++y) {
+
+			glm::vec2 pixel = glm::vec2(x + 0.5f, y + 0.5f);
+			glm::vec3 bary = MathUtils::barycentric2D(screenV0, screenV1, screenV2, pixel);
+			
+			float alpha = bary.x;
+			float beta = bary.y;
+			float gamma = bary.z;
+
+			if (alpha >= 0.0f && beta >= 0.0f && gamma >= 0.0f) {  // 点在三角形内
+				float z = 1/(alpha / clipV0.w + beta / clipV1.w + gamma / clipV2.w);  // 透视矫正插值
+				
+				// 将ndc的z值当作视图空间中三角形的属性进行插值
+				float ndcZ = z * (alpha * ndcV0.z / clipV0.w +
+					beta * ndcV1.z / clipV1.w +
+					gamma * ndcV2.z / clipV2.w);
+ 
+				float depth = ndcZ * 0.5f + 0.5f; // 映射到[0, 1]，-z因为ndc与view空间的深度方向相反
+				
+				if (framebuffer.depthTest(x, y, depth)) {
+					// 透视矫正插值
+					float r = z * (alpha * v0.color.x / clipV0.w + 
+						beta * v1.color.x / clipV1.w +
+						gamma * v2.color.x / clipV2.w);
+
+					float g = z * (alpha * v0.color.y / clipV0.w + 
+						beta * v1.color.y / clipV1.w + 
+						gamma * v2.color.y / clipV2.w);
+
+					float b = z * (alpha * v0.color.z / clipV0.w + 
+						beta * v1.color.z / clipV1.w + 
+						gamma * v2.color.z / clipV2.w);
+					
+					framebuffer.setPixel(x, y, { r,g,b });
+				}
+
+			}
+		}
+	}
+
 
 }

@@ -22,6 +22,10 @@ void Framebuffer::clear(uint32_t color) {
 	std::fill(colorbuffer.begin(), colorbuffer.end(), color);
 }
 
+void Framebuffer::clearDepth() {
+	std::fill(depthbuffer.begin(), depthbuffer.end(), 1.0f);
+}
+
 void Framebuffer::setPixel(int x, int y, uint32_t color) {
 	if (x >= 0 && x < width && y >= 0 && y < height) {
 		colorbuffer[y * width + x] = color;
@@ -30,4 +34,18 @@ void Framebuffer::setPixel(int x, int y, uint32_t color) {
 
 void Framebuffer::setPixel(int x, int y, glm::vec3 color) {
 	setPixel(x, y, colorToUint32(color));
+}
+
+bool Framebuffer::depthTest(int x, int y, float depth) {
+	if (x >= 0 && x < width && y >= 0 && y < height) {
+		if (depthbuffer[y * width + x] > depth) {
+			depthbuffer[y * width + x] = depth;
+
+			return true;
+		}
+
+		return false;
+	}
+
+	return false;
 }

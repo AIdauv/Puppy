@@ -9,13 +9,15 @@ public:
 	Framebuffer(int x, int y)
 		: width(x), height(y) { 
 
-		colorbuffer.resize(width * height);
+		colorbuffer.resize(width * height, 0);
+		depthbuffer.resize(width * height, 1.0f);
 	}
 
 	void clear(uint32_t color);
+	void clearDepth();
 	void setPixel(int x, int y, uint32_t color);
 	void setPixel(int x, int y, glm::vec3 color);
-
+	bool depthTest(int x, int y, float depth);
 	int getWidth() { return width; }
 	int getHeight() { return height; }
 	uint32_t* getData() { return colorbuffer.data(); }
@@ -26,4 +28,5 @@ public:
 private:
 	int width, height;
 	std::vector<uint32_t> colorbuffer;
+	std::vector<float> depthbuffer;
 };
