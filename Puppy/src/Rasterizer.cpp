@@ -116,17 +116,17 @@ void Rasterizer::drawTriangle3D(const Triangle3D& tri, const glm::mat4& viewMat,
 				
 				if (framebuffer.depthTest(x, y, depth)) {
 					// Õ∏ ”Ω√’˝≤Â÷µ
-					float r = z * (alpha * v0.color.x / clipV0.w + 
-						beta * v1.color.x / clipV1.w +
-						gamma * v2.color.x / clipV2.w);
+					float r = z * (alpha * v0.color.r / clipV0.w + 
+						beta * v1.color.r / clipV1.w +
+						gamma * v2.color.r / clipV2.w);
 
-					float g = z * (alpha * v0.color.y / clipV0.w + 
-						beta * v1.color.y / clipV1.w + 
-						gamma * v2.color.y / clipV2.w);
+					float g = z * (alpha * v0.color.g / clipV0.w + 
+						beta * v1.color.g / clipV1.w + 
+						gamma * v2.color.g / clipV2.w);
 
-					float b = z * (alpha * v0.color.z / clipV0.w + 
-						beta * v1.color.z / clipV1.w + 
-						gamma * v2.color.z / clipV2.w);
+					float b = z * (alpha * v0.color.b / clipV0.w + 
+						beta * v1.color.b / clipV1.w + 
+						gamma * v2.color.b / clipV2.w);
 					
 					framebuffer.setPixel(x, y, { r,g,b });
 				}

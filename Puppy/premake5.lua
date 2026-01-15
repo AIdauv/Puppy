@@ -10,12 +10,15 @@ project "Puppy"
     files
     {
         "src/**.h",
-        "src/**.cpp"
+        "src/**.cpp",
+        "vendor/stb_image/**.h",
+        "vendor/stb_image/**.cpp"
     }
 
     includedirs
     {
         "%{IncludeDir.glm}",
+        "%{IncludeDir.stb_image}",
         "%{IncludeDir.SDL2}"
     }
 
