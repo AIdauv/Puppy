@@ -14,10 +14,12 @@ public:
 
 	void drawTriangle2D(const glm::vec2& v0, const glm::vec2& v1,
 						const glm::vec2& v2, const glm::vec3& color);
-	void drawTriangle3D(const Triangle3D& tri, const glm::mat4& viewMat,
+
+	void drawTriangle3D(const Triangle3D& tri,
+						const glm::mat4& modelMat,
+						const glm::mat4& viewMat,
 						const glm::mat4& projectionMat,
 						MathUtils::CullingMode cullMode = MathUtils::CullingMode::NONE);
-
 
 private:
 	Framebuffer& framebuffer;

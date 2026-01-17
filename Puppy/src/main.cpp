@@ -2,6 +2,7 @@
 #include "Framebuffer.h"
 #include "Rasterizer.h"
 #include "Camera.h"
+#include "Model.h"
 #include <iostream>
 #include <chrono>
 
@@ -42,6 +43,13 @@ int main(int argc, char* argv[]) {
     tri2.v1 = Vertex3D(glm::vec3(0.0f, 0.5f, -1.5f), glm::vec3(1.0f, 0.0f, 1.0f));  // 注意：交换了顶点顺序
     tri2.v2 = Vertex3D(glm::vec3(0.5f, -0.5f, -0.75f), glm::vec3(0.0f, 1.0f, 1.0f));
     
+    // 6. 模型测试
+    Model model;
+    model.createCube(2);
+    model.setPosition(glm::vec3(0, 0, -5));
+    model.setRotation(glm::vec3(45.0f, 45.0f, 60.0f));
+    model.setScale(glm::vec3(1, 1, 1));
+    glm::mat4 modelMat = model.getModelMatrix();
 
     std::cout << "软光栅化器 v0.1 启动" << std::endl;
     std::cout << "控制说明：" << std::endl;
@@ -94,11 +102,15 @@ int main(int argc, char* argv[]) {
 
 
         // 绘制所有三角形
+        for (const Triangle3D& tri : model.getTriangles()) {
+            rasterizer.drawTriangle3D(tri, modelMat, camera.getViewMatrix(), camera.getProjectionMatrix(),
+                MathUtils::CullingMode::NONE);
+        }
 
-        rasterizer.drawTriangle3D(tri1, camera.getViewMatrix(), camera.getProjectionMatrix(), 
-            MathUtils::CullingMode::NONE);
-        rasterizer.drawTriangle3D(tri2, camera.getViewMatrix(), camera.getProjectionMatrix(), 
-            MathUtils::CullingMode::NONE);
+        //rasterizer.drawTriangle3D(tri1, glm::mat4(1.0f), camera.getViewMatrix(), camera.getProjectionMatrix(), 
+        //    MathUtils::CullingMode::NONE);
+        //rasterizer.drawTriangle3D(tri2, glm::mat4(1.0f), camera.getViewMatrix(), camera.getProjectionMatrix(),
+        //    MathUtils::CullingMode::NONE);
 
 
         // 绘制一些调试信息

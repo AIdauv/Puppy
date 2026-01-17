@@ -58,16 +58,20 @@ void Rasterizer::drawTriangle2D(const glm::vec2& v0, const glm::vec2& v1,
 
 }
 
-void Rasterizer::drawTriangle3D(const Triangle3D& tri, const glm::mat4& viewMat,
+void Rasterizer::drawTriangle3D(const Triangle3D& tri, const glm::mat4& modelMat, const glm::mat4& viewMat,
 	const glm::mat4& projectionMat, MathUtils::CullingMode cullMode) {
 
 	Vertex3D v0 = tri.v0;
 	Vertex3D v1 = tri.v1;
 	Vertex3D v2 = tri.v2;
 
-	glm::vec4 viewV0 = viewMat * glm::vec4(v0.position, 1);
-	glm::vec4 viewV1 = viewMat * glm::vec4(v1.position, 1);
-	glm::vec4 viewV2 = viewMat * glm::vec4(v2.position, 1);
+	glm::vec4 worldV0 = modelMat * glm::vec4(v0.position, 1);
+	glm::vec4 worldV1 = modelMat * glm::vec4(v1.position, 1);
+	glm::vec4 worldV2 = modelMat * glm::vec4(v2.position, 1);
+
+	glm::vec4 viewV0 = viewMat * worldV0;
+	glm::vec4 viewV1 = viewMat * worldV1;
+	glm::vec4 viewV2 = viewMat * worldV2;
 
 	if (MathUtils::isCulled(glm::vec3(viewV0), 
 		glm::vec3(viewV1), 
