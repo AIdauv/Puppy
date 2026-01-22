@@ -15,7 +15,7 @@ Window::~Window() {
 }
 
 bool Window::init() {
-    window = SDL_CreateWindow("Soft Renderer v0.1",
+    window = SDL_CreateWindow("Soft Renderer v0.3",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
         width, height,

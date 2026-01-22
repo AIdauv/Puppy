@@ -3,8 +3,14 @@
 #include "Rasterizer.h"
 #include "Camera.h"
 #include "Model.h"
+#include "Light.h"
+#include "Texture.h"
+#include "Shader.h"
+#include "SimpleShader.h"
+#include "PhongShader.h"
 #include <iostream>
 #include <chrono>
+#include <glm/gtc/matrix_transform.hpp> 
 
 int main(int argc, char* argv[]) {
     // 1. 创建窗口
@@ -29,7 +35,22 @@ int main(int argc, char* argv[]) {
         45.0f, 
         static_cast<float>(window.getWidth()) / window.getHeight());
 
-    // 5. 创建一些3D三角形进行测试
+    // 5. 创建光源
+    Light light;
+    light.position = glm::vec3(1, 1, 1);
+    light.color = glm::vec3(1.0f, 0.9f, 0.8f);  // 暖白色
+    light.intensity = 1.2f;
+
+    // 6. 创建纹理
+    Texture texture;
+    texture.loadFromFile("texture/1.jpg");
+    //texture.createSolidColor(256, 256, glm::vec3(1.0f, 0.5f, 0.0f));
+    //texture.createCheckerboard(256, 256, 32, 
+    //    glm::vec3(0.8f, 0.2f, 0.2f), 
+    //    glm::vec3(0.2f, 0.2f, 0.8f));
+
+
+    // 7. 创建一些3D三角形进行测试
      
     // 逆时针三角形（正面朝镜头）
     Triangle3D tri1;
@@ -43,15 +64,47 @@ int main(int argc, char* argv[]) {
     tri2.v1 = Vertex3D(glm::vec3(0.0f, 0.5f, -1.5f), glm::vec3(1.0f, 0.0f, 1.0f));  // 注意：交换了顶点顺序
     tri2.v2 = Vertex3D(glm::vec3(0.5f, -0.5f, -0.75f), glm::vec3(0.0f, 1.0f, 1.0f));
     
-    // 6. 模型测试
+    // 8. 模型测试
     Model model;
-    model.createCube(2);
-    model.setPosition(glm::vec3(0, 0, -5));
-    model.setRotation(glm::vec3(45.0f, 45.0f, 60.0f));
-    model.setScale(glm::vec3(1, 1, 1));
+    model.createCube(1);
+    model.setPosition(glm::vec3(-1, 0, 0));
+    float rotationAngle = 0.0f;
+    model.setRotation(glm::vec3(0.0f, 0.0f, 0.0f));
+    model.setScale(glm::vec3(1.0, 1.0, 1.0));
     glm::mat4 modelMat = model.getModelMatrix();
 
-    std::cout << "软光栅化器 v0.1 启动" << std::endl;
+
+    // 9. 创建着色器
+    std::unique_ptr<Shader> currentShader;
+    int shaderMode = 2;  // 0: Simple, 1: Texture, 2: Phong
+
+    if (shaderMode == 0) {
+        currentShader = std::make_unique<SimpleShader>();
+        std::cout << "使用简单着色器" << std::endl;
+    }
+    else if (shaderMode == 1) {
+        currentShader = std::make_unique<TextureShader>();
+        std::cout << "使用纹理着色器" << std::endl;
+    }
+    else {
+        currentShader = std::make_unique<PhongShader>();
+        std::cout << "使用Phong着色器" << std::endl;
+    }
+
+    // 着色器上下文
+    ShaderContext context;
+    context.modelMatrix = model.getModelMatrix();
+    context.viewMatrix = camera.getViewMatrix();
+    context.projectionMatrix = camera.getProjectionMatrix();
+    context.light = light;
+    context.cameraPos = camera.getPosition();
+    context.texture = &texture;
+    context.usePerspective = true;
+    context.useTexture = true;
+    context.useLight = true;
+
+
+    std::cout << "软光栅化器 v0.3 - 着色与纹理版本" << std::endl;
     std::cout << "控制说明：" << std::endl;
     std::cout << "  W/S - 前后移动" << std::endl;
     std::cout << "  A/D - 左右移动" << std::endl;
@@ -95,15 +148,26 @@ int main(int argc, char* argv[]) {
             camera.rotate(yaw, pitch);
         }
 
+        // 更新旋转
+        rotationAngle += 60.0f * deltaTime;  // 60度/秒
+        model.setRotation(glm::vec3(0, rotationAngle, 0));
+
+        // 更新着色器上下文
+        context.modelMatrix = model.getModelMatrix();
+        context.viewMatrix = camera.getViewMatrix();
+        context.cameraPos = camera.getPosition();
+
         // 清屏（黑色）
         framebuffer.clear(0xFF000000);  // ARGB: 黑色
         framebuffer.clearDepth();
 
-
+        
+        
 
         // 绘制所有三角形
+        
         for (const Triangle3D& tri : model.getTriangles()) {
-            rasterizer.drawTriangle3D(tri, modelMat, camera.getViewMatrix(), camera.getProjectionMatrix(),
+            rasterizer.drawTriangle3D(tri, *currentShader, context,
                 MathUtils::CullingMode::NONE);
         }
 

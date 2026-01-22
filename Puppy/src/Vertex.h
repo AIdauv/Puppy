@@ -18,23 +18,36 @@ struct Vertex3D
 
 };
 
-struct Vertex3DTransformed
+struct VertexShaderOutput
 {
-	glm::vec4 position;  // 齐次坐标
+	glm::vec4 clipPos;  // 裁剪空间的齐次坐标（透视除法前）
 	glm::vec3 worldPos;  // 世界坐标
 	glm::vec3 color;
-	glm::vec3 normal;
+	glm::vec3 worldNorm;  // 世界空间法线
 	glm::vec2 texcoord;
 
 	float oneOverW;  // 1/w，用于透视矫正
 
-	Vertex3DTransformed()
-		: position(0, 0, 0, 1), 
+	VertexShaderOutput()
+		: clipPos(0, 0, 0, 1), 
 		worldPos(0, 0, 0), 
 		color(1, 1, 1), 
-		normal(0, 1, 0), 
+		worldNorm(0, 1, 0), 
 		texcoord(0, 0), 
 		oneOverW(1.0f) {}
+};
+
+struct FragmentShaderInput {
+	glm::vec3 worldPos;    
+	glm::vec3 color;       
+	glm::vec3 worldNorm;      
+	glm::vec2 texcoord;    
+
+	FragmentShaderInput() 
+		: worldPos(0, 0, 0), 
+		color(1, 1, 1), 
+		worldNorm(0, 1, 0), 
+		texcoord(0, 0) {}
 };
 
 struct Triangle3D

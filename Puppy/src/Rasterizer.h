@@ -3,6 +3,7 @@
 #include "Framebuffer.h"
 #include "Vertex.h"
 #include "MathUtils.h"
+#include "Shader.h"
 #include <glm/glm.hpp>
 #include <vector>
 
@@ -21,6 +22,11 @@ public:
 						const glm::mat4& projectionMat,
 						MathUtils::CullingMode cullMode = MathUtils::CullingMode::NONE);
 
+	void drawTriangle3D(const Triangle3D& tri,
+		const Shader& shader,
+		const ShaderContext& context,
+		MathUtils::CullingMode cullMode = MathUtils::CullingMode::NONE);
+
 private:
 	Framebuffer& framebuffer;
 
@@ -30,4 +36,11 @@ private:
 	void getBoundingBox(const VecType& v0, const VecType& v1, const VecType& v2,
 						int& minX, int& minY, int& maxX, int& maxY);
 
+	// 辅助函数：插值顶点属性
+	FragmentShaderInput interpolateVertex(const VertexShaderOutput& vo0,
+		const VertexShaderOutput& vo1,
+		const VertexShaderOutput& vo2,
+		const glm::vec3& barycentric,
+		float interpolatedOneOverW,
+		const ShaderContext& context);
 };

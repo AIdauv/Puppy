@@ -49,7 +49,7 @@ void Texture::createCheckerboard(int w, int h, int tileSize,
 			int tileX = x / tileSize;
 			int tileY = y / tileSize;
 
-			bool isEven = (tileX + tileY % 2) == 0;
+			bool isEven = ((tileX + tileY) % 2) == 0;
 			glm::vec3 color = isEven ? color1 : color2;
 
 			int index = (y * w + x) * 3;

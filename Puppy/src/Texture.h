@@ -20,7 +20,7 @@ public:
 
 	int getWidth() const { return width; }
 	int getHeight() const { return height; }
-	bool isValid() const { return data.empty(); }
+	bool isValid() const { return !data.empty(); }
 private:
 	int width = 0, height = 0, channels = 0;
 	std::vector<uint8_t> data;

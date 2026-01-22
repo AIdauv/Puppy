@@ -27,9 +27,9 @@ class Shader
 public:
 	virtual ~Shader() = default;
 
-	virtual Vertex3DTransformed vertexShader(const Vertex3D& vertex, const ShaderContext& context) = 0;
+	virtual VertexShaderOutput vertexShader(const Vertex3D& vertex, const ShaderContext& context) const = 0;
 
-	virtual glm::vec3 fragmentShader(const Vertex3DTransformed& fragment, const ShaderContext& context) = 0;
+	virtual glm::vec3 fragmentShader(const FragmentShaderInput& fragment, const ShaderContext& context) const = 0;
 
     
     // 插值辅助函数（透视校正）
