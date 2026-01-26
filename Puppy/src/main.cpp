@@ -1,5 +1,6 @@
 #include "Window.h"
 #include "Framebuffer.h"
+#include "MultisampleFramebuffer.h"
 #include "Rasterizer.h"
 #include "Camera.h"
 #include "Model.h"
@@ -22,9 +23,10 @@ int main(int argc, char* argv[]) {
 
     // 2. 创建帧缓冲（画布）
     Framebuffer framebuffer(window.getWidth(), window.getHeight());
+    MultisampleFramebuffer framebufferMSAA(window.getWidth(), window.getHeight(), 4);  // MSAA帧缓冲
 
     // 3. 创建光栅化器
-    Rasterizer rasterizer(framebuffer);
+    Rasterizer rasterizer;
 
     // 4. 创建相机
     Camera camera;
@@ -69,7 +71,7 @@ int main(int argc, char* argv[]) {
     model.createCube(1);
     model.setPosition(glm::vec3(-1, 0, 0));
     float rotationAngle = 0.0f;
-    model.setRotation(glm::vec3(0.0f, 0.0f, 0.0f));
+    model.setRotation(glm::vec3(0.0f, 40.0f, 0.0f));
     model.setScale(glm::vec3(1.0, 1.0, 1.0));
     glm::mat4 modelMat = model.getModelMatrix();
 
@@ -149,8 +151,8 @@ int main(int argc, char* argv[]) {
         }
 
         // 更新旋转
-        rotationAngle += 60.0f * deltaTime;  // 60度/秒
-        model.setRotation(glm::vec3(0, rotationAngle, 0));
+        //rotationAngle += 60.0f * deltaTime;  // 60度/秒
+        //model.setRotation(glm::vec3(0, rotationAngle, 0));
 
         // 更新着色器上下文
         context.modelMatrix = model.getModelMatrix();
@@ -161,19 +163,22 @@ int main(int argc, char* argv[]) {
         framebuffer.clear(0xFF000000);  // ARGB: 黑色
         framebuffer.clearDepth();
 
+        framebufferMSAA.clear(0xFF000000);  // ARGB: 黑色
+        framebufferMSAA.clearDepth();
+
         
         
 
         // 绘制所有三角形
         
         for (const Triangle3D& tri : model.getTriangles()) {
-            rasterizer.drawTriangle3D(tri, *currentShader, context,
-                MathUtils::CullingMode::NONE);
+            rasterizer.drawTriangle3D(tri, *currentShader, context, framebufferMSAA,
+                MathUtils::CullingMode::BACK);
         }
 
-        //rasterizer.drawTriangle3D(tri1, glm::mat4(1.0f), camera.getViewMatrix(), camera.getProjectionMatrix(), 
+        //rasterizer.drawTriangle3D(tri1, glm::mat4(1.0f), camera.getViewMatrix(), camera.getProjectionMatrix(), framebuffer,
         //    MathUtils::CullingMode::NONE);
-        //rasterizer.drawTriangle3D(tri2, glm::mat4(1.0f), camera.getViewMatrix(), camera.getProjectionMatrix(),
+        //rasterizer.drawTriangle3D(tri2, glm::mat4(1.0f), camera.getViewMatrix(), camera.getProjectionMatrix(), framebuffer,
         //    MathUtils::CullingMode::NONE);
 
 
@@ -182,7 +187,10 @@ int main(int argc, char* argv[]) {
         framebuffer.setPixel(window.getWidth() - 10, 10, glm::vec3(1, 1, 1));  // 右上角白点
 
         // 更新到窗口
-        window.updateTexture(framebuffer.getData(), framebuffer.getPitch());
+        //window.updateTexture(framebuffer.getData(), framebufferMSAA.getPitch());
+        
+        framebufferMSAA.resolve();
+        window.updateTexture(framebufferMSAA.getResolvedData(), framebufferMSAA.getPitch());
         window.render();
 
     }

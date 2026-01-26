@@ -22,9 +22,9 @@ bool Rasterizer::isInsideTriangle2D(const glm::vec2& p, const glm::vec2& v0,
 	return (c0 >= 0 && c1 >= 0 && c2 >= 0) || (c0 <= 0 && c1 <= 0 && c2 <= 0);
 }
 
-template<typename VecType>
+template<typename VecType, typename FrameBufferType>
 void Rasterizer::getBoundingBox(const VecType& v0, const VecType& v1, const VecType& v2,
-	int& minX, int& minY, int& maxX, int& maxY) {
+	int& minX, int& minY, int& maxX, int& maxY, FrameBufferType framebuffer) {
 
 	minX = static_cast<int>(std::floor(std::min({ v0.x, v1.x, v2.x })));
 	minY = static_cast<int>(std::floor(std::min({ v0.y, v1.y, v2.y })));
@@ -39,11 +39,11 @@ void Rasterizer::getBoundingBox(const VecType& v0, const VecType& v1, const VecT
 }
 
 void Rasterizer::drawTriangle2D(const glm::vec2& v0, const glm::vec2& v1,
-	const glm::vec2& v2, const glm::vec3& color) {
+	const glm::vec2& v2, const glm::vec3& color, Framebuffer& framebuffer) {
 
 	int minX, minY, maxX, maxY;
 
-	getBoundingBox(v0, v1, v2, minX, minY, maxX, maxY);
+	getBoundingBox(v0, v1, v2, minX, minY, maxX, maxY, framebuffer);
 
 	for (int y = minY; y <= maxY; y++) {
 		for (int x = minX; x <= maxX; x++) {
@@ -62,6 +62,7 @@ void Rasterizer::drawTriangle3D(const Triangle3D& tri,
 	const glm::mat4& modelMat, 
 	const glm::mat4& viewMat,
 	const glm::mat4& projectionMat, 
+	Framebuffer& framebuffer,
 	MathUtils::CullingMode cullMode) {
 
 	Vertex3D v0 = tri.v0;
@@ -99,7 +100,7 @@ void Rasterizer::drawTriangle3D(const Triangle3D& tri,
 	glm::vec3 screenV2 = MathUtils::viewportTransform(glm::vec3(ndcV2), width, height);
 
 	int minX, minY, maxX, maxY;
-	getBoundingBox(screenV0, screenV1, screenV2, minX, minY, maxX, maxY);
+	getBoundingBox(screenV0, screenV1, screenV2, minX, minY, maxX, maxY, framebuffer);
 
 	for (int x = minX; x <= maxX; ++x) {
 		for (int y = minY; y <= maxY; ++y) {
@@ -148,6 +149,7 @@ void Rasterizer::drawTriangle3D(const Triangle3D& tri,
 void Rasterizer::drawTriangle3D(const Triangle3D& tri,
 	const Shader& shader,
 	const ShaderContext& context,
+	Framebuffer& framebuffer,
 	MathUtils::CullingMode cullMode) {
 
 	Vertex3D v0 = tri.v0;
@@ -188,7 +190,7 @@ void Rasterizer::drawTriangle3D(const Triangle3D& tri,
 	glm::vec3 screen2 = MathUtils::viewportTransform(ndc2, width, height);
 
 	int minX, minY, maxX, maxY;
-	getBoundingBox(screen0, screen1, screen2, minX, minY, maxX, maxY);
+	getBoundingBox(screen0, screen1, screen2, minX, minY, maxX, maxY, framebuffer);
 
 	for (int x = minX; x <= maxX; ++x) {
 		for (int y = minY; y <= maxY; ++y) {
@@ -219,6 +221,97 @@ void Rasterizer::drawTriangle3D(const Triangle3D& tri,
 					framebuffer.setPixel(x, y, color);
 				}
 
+			}
+		}
+	}
+}
+
+void Rasterizer::drawTriangle3D(const Triangle3D& tri,
+	const Shader& shader,
+	const ShaderContext& context,
+	MultisampleFramebuffer& framebuffer,
+	MathUtils::CullingMode cullMode) {
+
+	Vertex3D v0 = tri.v0;
+	Vertex3D v1 = tri.v1;
+	Vertex3D v2 = tri.v2;
+
+	glm::vec4 worldV0 = context.modelMatrix * glm::vec4(v0.position, 1);
+	glm::vec4 worldV1 = context.modelMatrix * glm::vec4(v1.position, 1);
+	glm::vec4 worldV2 = context.modelMatrix * glm::vec4(v2.position, 1);
+
+	glm::vec4 viewV0 = context.viewMatrix * worldV0;
+	glm::vec4 viewV1 = context.viewMatrix * worldV1;
+	glm::vec4 viewV2 = context.viewMatrix * worldV2;
+
+	if (MathUtils::isCulled(glm::vec3(viewV0),
+		glm::vec3(viewV1),
+		glm::vec3(viewV2),
+		cullMode)) {
+		return;
+	}
+
+	// 顶点着色
+	VertexShaderOutput vo0 = shader.vertexShader(v0, context);
+	VertexShaderOutput vo1 = shader.vertexShader(v1, context);
+	VertexShaderOutput vo2 = shader.vertexShader(v2, context);
+
+	//透视除法
+	glm::vec3 ndc0 = glm::vec3(vo0.clipPos) / vo0.clipPos.w;
+	glm::vec3 ndc1 = glm::vec3(vo1.clipPos) / vo1.clipPos.w;
+	glm::vec3 ndc2 = glm::vec3(vo2.clipPos) / vo2.clipPos.w;
+
+
+	int width = framebuffer.getWidth();
+	int height = framebuffer.getHeight();
+
+	glm::vec3 screen0 = MathUtils::viewportTransform(ndc0, width, height);
+	glm::vec3 screen1 = MathUtils::viewportTransform(ndc1, width, height);
+	glm::vec3 screen2 = MathUtils::viewportTransform(ndc2, width, height);
+
+	int minX, minY, maxX, maxY;
+	getBoundingBox(screen0, screen1, screen2, minX, minY, maxX, maxY, framebuffer);
+
+	const auto& sampleOffsets = framebuffer.getSampleOffsets();
+	int numSamples = framebuffer.getSamplesPerPixel();
+
+	for (int x = minX; x <= maxX; ++x) {
+		for (int y = minY; y <= maxY; ++y) {
+
+			for (int s = 0; s < numSamples; s++) {
+
+				const glm::vec2& offset = sampleOffsets[s];
+				
+				float sampleX = x + 0.5f + offset.x;
+				float sampleY = y + 0.5f + offset.y;
+
+				glm::vec2 sample(sampleX, sampleY);
+
+				glm::vec3 bary = MathUtils::barycentric2D(screen0, screen1, screen2, sample);
+
+				float alpha = bary.x;
+				float beta = bary.y;
+				float gamma = bary.z;
+
+				if (alpha >= 0.0f && beta >= 0.0f && gamma >= 0.0f) {  // 采样点在三角形内
+					float interpolatedOneOverW = alpha * vo0.oneOverW + beta * vo1.oneOverW + gamma * vo2.oneOverW;  // 插值1/w
+					
+					// 将ndc的z值当作视图空间中三角形的属性进行插值
+					float ndcZ = (alpha * ndc0.z * vo0.oneOverW +
+						beta * ndc1.z * vo1.oneOverW +
+						gamma * ndc2.z * vo2.oneOverW) / interpolatedOneOverW;
+
+					float depth = ndcZ * 0.5f + 0.5f; // 映射到[0, 1]，0近1远（ndc与view空间的深度方向相反）
+
+					if (framebuffer.sampleDepthTest(x, y, s, depth)) {
+						// 插值顶点属性
+						FragmentShaderInput fragment = interpolateVertex(vo0, vo1, vo2, bary, interpolatedOneOverW, context);
+
+						glm::vec3 color = shader.fragmentShader(fragment, context);
+
+						framebuffer.setSample(x, y, s, color);
+					}
+				}
 			}
 		}
 	}

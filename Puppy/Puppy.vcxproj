@@ -157,6 +157,7 @@
     <ClInclude Include="src\Framebuffer.h" />
     <ClInclude Include="src\MathUtils.h" />
     <ClInclude Include="src\Model.h" />
+    <ClInclude Include="src\MultisampleFramebuffer.h" />
     <ClInclude Include="src\PhongShader.h" />
     <ClInclude Include="src\Rasterizer.h" />
     <ClInclude Include="src\Shader.h" />
@@ -171,6 +172,7 @@
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Framebuffer.cpp" />
     <ClCompile Include="src\Model.cpp" />
+    <ClCompile Include="src\MultisampleFramebuffer.cpp" />
     <ClCompile Include="src\PhongShader.cpp" />
     <ClCompile Include="src\Rasterizer.cpp" />
     <ClCompile Include="src\SimpleShader.cpp" />
