@@ -56,7 +56,7 @@ glm::vec3 TextureShader::fragmentShader(const FragmentShaderInput& fragment,
 	const ShaderContext& context) const {
 
 	if (context.texture && context.useTexture) {
-		return context.texture->sampleBilinear(fragment.texcoord.x, fragment.texcoord.y);
+		return context.texture->sample(fragment.texcoord.x, fragment.texcoord.y);
 	}
 
 	return fragment.color;

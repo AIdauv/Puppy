@@ -46,6 +46,7 @@ int main(int argc, char* argv[]) {
     // 6. ¥¥Ω®Œ∆¿Ì
     Texture texture;
     texture.loadFromFile("texture/1.jpg");
+    texture.setSampleMode(SampleMode::Bilinear);
     //texture.createSolidColor(256, 256, glm::vec3(1.0f, 0.5f, 0.0f));
     //texture.createCheckerboard(256, 256, 32, 
     //    glm::vec3(0.8f, 0.2f, 0.2f), 

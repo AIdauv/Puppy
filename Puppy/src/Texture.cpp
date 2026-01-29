@@ -70,6 +70,77 @@ glm::vec3 Texture::sample(float u, float v) const {
 		return { 1, 0, 1 };  // 紫色表示纹理丢失
 	}
 
+	switch (sampleMode)
+	{
+	case Nearest:
+		sampleNearest(u, v, data, width, height);
+		break;
+	case Bilinear:
+		sampleBilinear(u, v, data, width, height);
+		break;
+	default:
+		break;
+	}
+}
+
+void Texture::generateMipmaps() {
+	if (!isValid()) return;
+
+	// 清空现有的Mipmap
+	mipmaps.clear();
+	mipWidths.clear();
+	mipHeights.clear();
+
+	// 第0级：原始纹理
+	mipmaps.push_back(data);
+	mipWidths.push_back(width);
+	mipHeights.push_back(height);
+
+	// 生成后续级别，直到尺寸为1x1
+	int currentWidth = width;
+	int currentHeight = height;
+	int currentLevel = 0;
+
+	while (currentWidth > 1 || currentHeight > 1) {
+		generateMipmapLevel(currentLevel);
+
+		currentLevel++;
+		currentWidth = std::max(1, currentWidth / 2);
+		currentHeight = std::max(1, currentHeight / 2);
+
+		mipWidths.push_back(currentWidth);
+		mipHeights.push_back(currentHeight);
+	}
+
+	mipLevels = static_cast<int>(mipmaps.size());
+}
+
+glm::vec3 Texture::sampleMipmap(float u, float v, float lod) const {
+	if (!isValid() || mipmaps.empty()) {
+		return { 1, 0, 1 };  // 紫色表示纹理丢失
+	}
+
+	lod = glm::clamp(lod, 0.0f, static_cast<float>(mipLevels - 1));
+
+	int level0 = static_cast<int>(std::floor(lod));
+	int level1 = std::min(level0 + 1, mipLevels - 1);
+	
+	float t = lod - level0;
+
+	if (level0 == level1) {
+		// 直接采样单个级别
+		return sampleLevel(u, v, level0);
+	}
+
+	// 三线性过滤：在两个级别之间线性插值
+	glm::vec3 color0 = sampleLevel(u, v, level0);
+	glm::vec3 color1 = sampleLevel(u, v, level1);
+
+	return glm::mix(color0, color1, t);
+}
+
+glm::vec3 Texture::sampleNearest(float u, float v, const std::vector<uint8_t>& data, int width, int height) const {
+
 	// 最近邻
 	int x = static_cast<int>(u * width) % width;
 	int y = static_cast<int>((1.0f - v) * height) % height;
@@ -77,19 +148,16 @@ glm::vec3 Texture::sample(float u, float v) const {
 	x = glm::clamp(x, 0, width - 1);
 	y = glm::clamp(y, 0, height - 1);
 
-	return getPixel(x, y);
+	return getPixel(x, y, width, data);
 }
 
-glm::vec3 Texture::sampleBilinear(float u, float v) const {
-	if (!isValid()) {
-		return glm::vec3(1, 0, 1);
-	}
+glm::vec3 Texture::sampleBilinear(float u, float v, const std::vector<uint8_t>& data, int width, int height) const {
 
 	u = glm::fract(u);  // 取小数部分
 	v = glm::fract(v);
 
 	float x = u * width - 0.5f;  // 像素中心对其
-	float y = (1.0f - v) * height - 0.5f; 
+	float y = (1.0f - v) * height - 0.5f;
 
 	int x0 = static_cast<int>(std::floor(x));
 	int x1 = x0 + 1;
@@ -104,10 +172,10 @@ glm::vec3 Texture::sampleBilinear(float u, float v) const {
 	float fx = x - x0;
 	float fy = y - y0;
 
-	glm::vec3 p00 = getPixel(x0, y0);
-	glm::vec3 p10 = getPixel(x1, y0);
-	glm::vec3 p01 = getPixel(x0, y1);
-	glm::vec3 p11 = getPixel(x1, y1);
+	glm::vec3 p00 = getPixel(x0, y0, width, data);
+	glm::vec3 p10 = getPixel(x1, y0, width, data);
+	glm::vec3 p01 = getPixel(x0, y1, width, data);
+	glm::vec3 p11 = getPixel(x1, y1, width, data);
 
 	glm::vec3 clr0 = glm::mix(p00, p10, fx);
 	glm::vec3 clr1 = glm::mix(p01, p11, fx);
@@ -115,7 +183,80 @@ glm::vec3 Texture::sampleBilinear(float u, float v) const {
 	return glm::mix(clr0, clr1, fy);
 }
 
-glm::vec3 Texture::getPixel(int x, int y) const {
+void Texture::generateMipmapLevel(int sourceLevel) {
+	const std::vector<uint8_t>& sourceData = mipmaps[sourceLevel];
+	int srcWidth = mipWidths[sourceLevel];
+	int srcHeight = mipHeights[sourceLevel];
+
+	int dstWidth = std::max(1, srcWidth / 2);
+	int dstHeight = std::max(1, srcHeight / 2);
+
+	std::vector<uint8_t> dstData(dstWidth * dstHeight * channels);
+
+	// 使用盒式过滤生成下一级Mipmap
+	for (int y = 0; y < dstHeight; y++) {
+		for (int x = 0; x < dstWidth; x++) {
+
+			int srcX0 = x * 2;
+			int srcY0 = x * 2;
+			int srcX1 = std::min(srcX0 + 1, srcWidth - 1);
+			int srcY1 = std::min(srcY0 + 1, srcHeight - 1);
+
+			// 计算4个像素的平均值
+			for (int c = 0; c < channels; c++) {
+
+				int sum = 0;
+				int count = 0;
+
+				auto getChannel = [&](int px, int py) {
+					int idx = (py * srcWidth + px) * channels + c;
+					return sourceData[idx];
+				};
+
+				sum += getChannel(srcX0, srcY0);
+				count++;
+
+				// 排除在边界处srcX1与srcX0相等的情况，不计入均值计算，
+				// 否则相当于(srcX0, srcY0)参与两次,下同
+				if (srcX1 > srcX0) {
+					sum += getChannel(srcX1, srcY0);
+					count++;
+				}
+				
+				if (srcY1 > srcY0) {
+					sum += getChannel(srcX0, srcY1);
+					count++;
+				}
+
+				if (srcX1 > srcX0 && srcY1 > srcY0) {
+					sum += getChannel(srcX1, srcY1);
+					count++;
+				}
+
+				int avg = sum / count;
+				int dstIdx = (y * dstWidth + x) * channels + c;
+				dstData[dstIdx] = static_cast<uint8_t>(avg);
+			}
+		}
+	}
+
+	mipmaps.push_back(dstData);
+}
+
+glm::vec3 Texture::sampleLevel(float u, float v, int level) const {
+	if (level < 0 || level >= mipLevels) {
+		return glm::vec3(0, 0, 0);
+	}
+
+	int w = mipWidths[level];
+	int h = mipHeights[level];
+	const std::vector<uint8_t>& levelData = mipmaps[level];
+
+	return sampleBilinear(u, v, levelData, w, h);
+	
+}
+
+glm::vec3 Texture::getPixel(int x, int y, int width, const std::vector<uint8_t>& data) const {
 	int index = (y * width + x) * channels;
 
 	if (channels >= 3) {
@@ -124,7 +265,8 @@ glm::vec3 Texture::getPixel(int x, int y) const {
 			data[index + 1] / 255.0f,
 			data[index + 2] / 255.0f
 		};
-	} else if(channels == 1) {
+	}
+	else if (channels == 1) {
 		return {
 			data[index] / 255.0f,
 			data[index] / 255.0f,

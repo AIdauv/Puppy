@@ -29,7 +29,7 @@ glm::vec3 PhongShader::fragmentShader(const FragmentShaderInput& fragment,
 	glm::vec3 baseColor;
 
 	if (context.texture && context.useTexture) {
-		baseColor = context.texture->sampleBilinear(fragment.texcoord.x, fragment.texcoord.y);
+		baseColor = context.texture->sample(fragment.texcoord.x, fragment.texcoord.y);
 	}
 	else {
 		baseColor = fragment.color;
