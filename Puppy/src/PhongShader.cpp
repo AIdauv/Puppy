@@ -29,7 +29,14 @@ glm::vec3 PhongShader::fragmentShader(const FragmentShaderInput& fragment,
 	glm::vec3 baseColor;
 
 	if (context.texture && context.useTexture) {
-		baseColor = context.texture->sample(fragment.texcoord.x, fragment.texcoord.y);
+		if (context.texture->getMipLevels() > 0) {
+			baseColor = context.texture->sampleMipmap(fragment.texcoord.x,
+				fragment.texcoord.y,
+				fragment.lod);
+		}
+		else {
+			baseColor = context.texture->sample(fragment.texcoord.x, fragment.texcoord.y);
+		}
 	}
 	else {
 		baseColor = fragment.color;

@@ -56,7 +56,14 @@ glm::vec3 TextureShader::fragmentShader(const FragmentShaderInput& fragment,
 	const ShaderContext& context) const {
 
 	if (context.texture && context.useTexture) {
-		return context.texture->sample(fragment.texcoord.x, fragment.texcoord.y);
+		if (context.texture->getMipLevels() > 0) {
+			return context.texture->sampleMipmap(fragment.texcoord.x,
+				fragment.texcoord.y,
+				fragment.lod);
+		}
+		else {
+			return context.texture->sample(fragment.texcoord.x, fragment.texcoord.y);
+		}
 	}
 
 	return fragment.color;

@@ -1,5 +1,5 @@
 #include "Rasterizer.h"
-
+#include <iostream>
 bool Rasterizer::isInsideTriangle2D(const glm::vec2& p, const glm::vec2& v0,
 	const glm::vec2& v1, const glm::vec2& v2) {
 
@@ -268,48 +268,113 @@ void Rasterizer::drawTriangle3D(const Triangle3D& tri,
 	glm::vec3 screen0 = MathUtils::viewportTransform(ndc0, width, height);
 	glm::vec3 screen1 = MathUtils::viewportTransform(ndc1, width, height);
 	glm::vec3 screen2 = MathUtils::viewportTransform(ndc2, width, height);
-
+	
+	glm::vec2 triangleGradX, triangleGradY;  // 三角形整体梯度
+	glm::vec2 textureSize;
+	float lodForBlock = 0.0f;  // 块内lod
+	
+	// 如果有mipmap
+	if (context.texture && context.useTexture && context.texture->getMipLevels() > 0) {
+		// 计算三角形整体梯度（用于备用）
+		computeTriangleGradient(vo0, vo1, vo2, screen0, screen1, screen2, triangleGradX, triangleGradY);
+		textureSize = { context.texture->getWidth(), context.texture->getHeight() };
+	}
+	
 	int minX, minY, maxX, maxY;
 	getBoundingBox(screen0, screen1, screen2, minX, minY, maxX, maxY, framebuffer);
 
 	const auto& sampleOffsets = framebuffer.getSampleOffsets();
 	int numSamples = framebuffer.getSamplesPerPixel();
 
-	for (int x = minX; x <= maxX; ++x) {
-		for (int y = minY; y <= maxY; ++y) {
+	// 按2x2块遍历
+	for (int blockY = minY; blockY <= maxY; blockY+=2) {
+		for (int blockX = minX; blockX <= maxX; blockX+=2) {
+			
+			// 如果有mipmap
+			if (context.texture && context.useTexture && context.texture->getMipLevels() > 0) {
+				// 2x2块的四个像素中心点
+				glm::vec2 p00(blockX + 0.5f, blockY + 0.5f);
+				glm::vec3 bary00 = MathUtils::barycentric2D(screen0, screen1, screen2, p00);
 
-			for (int s = 0; s < numSamples; s++) {
 
-				const glm::vec2& offset = sampleOffsets[s];
-				
-				float sampleX = x + 0.5f + offset.x;
-				float sampleY = y + 0.5f + offset.y;
+				glm::vec3 bary10 = { -1, -1, -1 };
+				glm::vec3 bary01 = { -1, -1, -1 };
+				glm::vec3 bary11 = { -1, -1, -1 };
 
-				glm::vec2 sample(sampleX, sampleY);
+				int countX = 1;
+				int countY = 1;
 
-				glm::vec3 bary = MathUtils::barycentric2D(screen0, screen1, screen2, sample);
+				if (blockX != maxX) {
+					glm::vec2 p10(blockX + 1.5f, blockY + 0.5f);
+					bary10 = MathUtils::barycentric2D(screen0, screen1, screen2, p10);
+					countX = 2;
+				}
+				if (blockY != maxY) {
+					glm::vec2 p01(blockX + 0.5f, blockY + 1.5f);
+					bary01 = MathUtils::barycentric2D(screen0, screen1, screen2, p01);
+					countY = 2;
+				}
+				if (blockX != maxX && blockY != maxY) {
+					glm::vec2 p11(blockX + 1.5f, blockY + 1.5f);
+					bary11 = MathUtils::barycentric2D(screen0, screen1, screen2, p11);
+				}
 
-				float alpha = bary.x;
-				float beta = bary.y;
-				float gamma = bary.z;
+				// 计算这个块的LOD
+					lodForBlock = computeLodForPixelQuad(bary00, bary10, bary01, bary11,
+					vo0, vo1, vo2,
+					textureSize,
+					triangleGradX, triangleGradY);
+			}
+			
 
-				if (alpha >= 0.0f && beta >= 0.0f && gamma >= 0.0f) {  // 采样点在三角形内
-					float interpolatedOneOverW = alpha * vo0.oneOverW + beta * vo1.oneOverW + gamma * vo2.oneOverW;  // 插值1/w
-					
-					// 将ndc的z值当作视图空间中三角形的属性进行插值
-					float ndcZ = (alpha * ndc0.z * vo0.oneOverW +
-						beta * ndc1.z * vo1.oneOverW +
-						gamma * ndc2.z * vo2.oneOverW) / interpolatedOneOverW;
+			// 遍历块内像素
+			for (int dy = 0; dy < 2; dy++) {
+				for (int dx = 0; dx < 2; dx++) {
 
-					float depth = ndcZ * 0.5f + 0.5f; // 映射到[0, 1]，0近1远（ndc与view空间的深度方向相反）
+					int x = blockX + dx;
+					int y = blockY + dy;
 
-					if (framebuffer.sampleDepthTest(x, y, s, depth)) {
-						// 插值顶点属性
-						FragmentShaderInput fragment = interpolateVertex(vo0, vo1, vo2, bary, interpolatedOneOverW, context);
+					if (x > maxX || y > maxY) {
+						continue;  // 超出三角形包围盒，跳过
+					}
 
-						glm::vec3 color = shader.fragmentShader(fragment, context);
+					for (int s = 0; s < numSamples; s++) {
 
-						framebuffer.setSample(x, y, s, color);
+						const glm::vec2& offset = sampleOffsets[s];
+
+						float sampleX = x + 0.5f + offset.x;
+						float sampleY = y + 0.5f + offset.y;
+
+						glm::vec2 sample(sampleX, sampleY);
+
+						glm::vec3 bary = MathUtils::barycentric2D(screen0, screen1, screen2, sample);
+
+						float alpha = bary.x;
+						float beta = bary.y;
+						float gamma = bary.z;
+
+						if (alpha >= 0.0f && beta >= 0.0f && gamma >= 0.0f) {  // 采样点在三角形内
+							float interpolatedOneOverW = alpha * vo0.oneOverW + beta * vo1.oneOverW + gamma * vo2.oneOverW;  // 插值1/w
+
+							// 将ndc的z值当作视图空间中三角形的属性进行插值
+							float ndcZ = (alpha * ndc0.z * vo0.oneOverW +
+								beta * ndc1.z * vo1.oneOverW +
+								gamma * ndc2.z * vo2.oneOverW) / interpolatedOneOverW;
+
+							float depth = ndcZ * 0.5f + 0.5f; // 映射到[0, 1]，0近1远（ndc与view空间的深度方向相反）
+
+							if (framebuffer.sampleDepthTest(x, y, s, depth)) {
+								// 插值顶点属性
+								FragmentShaderInput fragment = interpolateVertex(vo0, vo1, vo2, bary, interpolatedOneOverW, context);
+
+								// 设置lod
+								fragment.lod = lodForBlock;
+
+								glm::vec3 color = shader.fragmentShader(fragment, context);
+
+								framebuffer.setSample(x, y, s, color);
+							}
+						}
 					}
 				}
 			}
@@ -352,4 +417,126 @@ FragmentShaderInput Rasterizer::interpolateVertex(const VertexShaderOutput& vo0,
 		interpolatedOneOverW, context.usePerspective);
 
 	return result;
+}
+
+void Rasterizer::computeTriangleGradient(const VertexShaderOutput& v0,
+	const VertexShaderOutput& v1,
+	const VertexShaderOutput& v2,
+	const glm::vec2& ScPos0,
+	const glm::vec2& ScPos1,
+	const glm::vec2& ScPos2,
+	glm::vec2& dTdx, glm::vec2& dTdy) {
+
+	// 三角形面积的2倍
+	float area = (ScPos1.x - ScPos0.x) * (ScPos2.y - ScPos0.y) - (ScPos2.x - ScPos0.x) * (ScPos1.y - ScPos0.y);
+	if (fabs(area) < 1e-8f) {
+		dTdx = dTdy = glm::vec2(0.0f);
+		return;
+	}
+
+	float invArea = 1.0f / area;
+
+	// 直接使用顶点纹理坐标计算梯度，假设在三角形内纹理坐标变化是线性的，忽略了透视矫正
+	glm::vec2 uv0 = v0.texcoord;
+	glm::vec2 uv1 = v1.texcoord;
+	glm::vec2 uv2 = v2.texcoord;
+
+	// 计算dT/dx和dT/dy
+	// 计算d(u)/dx, d(v)/dx
+	dTdx.x = invArea * ((uv1.y - uv0.y) * (ScPos2.x - ScPos0.x) - (uv2.y - uv0.y) * (ScPos1.x - ScPos0.x));
+	dTdx.y = invArea * ((uv1.x - uv0.x) * (ScPos2.x - ScPos0.x) - (uv2.x - uv0.x) * (ScPos1.x - ScPos0.x));
+
+	// 计算d(u)/dy, d(v)/dy
+	dTdy.x = invArea * ((uv1.y - uv0.y) * (ScPos2.y - ScPos0.y) - (uv2.y - uv0.y) * (ScPos1.y - ScPos0.y));
+	dTdy.y = invArea * ((uv1.x - uv0.x) * (ScPos2.y - ScPos0.y) - (uv2.x - uv0.x) * (ScPos1.y - ScPos0.y));
+}
+
+float Rasterizer::computeLodForPixelQuad(const glm::vec3& bary00, const glm::vec3& bary10,
+	const glm::vec3& bary01, const glm::vec3& bary11,
+	const VertexShaderOutput& vo0,
+	const VertexShaderOutput& vo1,
+	const VertexShaderOutput& vo2,
+	const glm::vec2& textureSize,
+	const glm::vec2& triangleGradX,
+	const glm::vec2& triangleGradY) {
+
+	// 辅助函数：计算点的纹理坐标和有效性
+	auto computeTexCoord = [&](const glm::vec3& bary, bool& Valid) {
+		Valid = (bary.x >= 0 && bary.y >= 0 && bary.z >= 0);
+
+		if (Valid) {
+			float oneOverW = bary.x * vo0.oneOverW +
+				bary.y * vo1.oneOverW +
+				bary.z * vo2.oneOverW;
+			glm::vec2 texOverW = bary.x * (vo0.texcoord * vo0.oneOverW) +
+				bary.y * (vo1.texcoord * vo1.oneOverW) +
+				bary.z * (vo2.texcoord * vo2.oneOverW);
+
+			glm::vec2 texcoord = texOverW / oneOverW;
+
+			return texcoord;
+		}
+		return glm::vec2(0.0f);
+	};
+
+	// 1. 计算四个点的有效性和纹理坐标
+	glm::vec2 tex00, tex10, tex01, tex11;
+	bool valid00, valid10, valid01, valid11;
+
+	tex00 = computeTexCoord(bary00, valid00);
+	tex10 = computeTexCoord(bary10, valid10);
+	tex01 = computeTexCoord(bary01, valid01);
+	tex11 = computeTexCoord(bary11, valid11);
+
+	// 2. 计算有效点数
+	int validCount = (valid00 ? 1 : 0) + (valid10 ? 1 : 0) + (valid01 ? 1 : 0) + (valid11 ? 1 : 0);
+
+	glm::vec2 dTdx(0.0f), dTdy(0.0f);
+
+	// 3. 根据有效点数选择计算策略
+	if (validCount >= 2) {
+		
+		int dxPairs = 0, dyPairs = 0;
+
+		// 使用块内有效点计算导数
+		// 水平导数
+		if (valid00 && valid10) { dTdx += (tex10 - tex00); dxPairs++; }
+		if (valid01 && valid11) { dTdx += (tex11 - tex01); dxPairs++; }
+		if (dxPairs > 0) dTdx /= static_cast<float>(dxPairs);
+
+		// 垂直导数
+		if (valid00 && valid01) { dTdy += (tex01 - tex00); dyPairs++; }
+		if (valid10 && valid11) { dTdy += (tex11 - tex10); dyPairs++; }
+		if (dyPairs > 0) dTdy /= static_cast<float>(dyPairs);
+
+		// 如果单方向缺失（整行或整列缺失），将缺失方向保守估计为另一方向的倍数
+		if (dxPairs == 0 && dyPairs > 0) dTdx = dTdy * 1.5f;
+		if (dyPairs == 0 && dxPairs > 0) dTdy = dTdx * 1.5f;
+
+		// 没有有效的导数对（对角无效），使用三角形整体梯度
+		if (dxPairs == 0 && dyPairs == 0) {
+			dTdx = triangleGradX;
+			dTdy = triangleGradY;
+		}
+	}
+	else {
+		// 有效点不足，使用三角形整体梯度
+		dTdx = triangleGradX;
+		dTdy = triangleGradY;
+	}
+
+	// 4. 转换为纹素空间并计算LOD
+	glm::vec2 ddx_texels = dTdx * textureSize;
+	glm::vec2 ddy_texels = dTdy * textureSize;
+	float maxLength = glm::max(glm::length(ddx_texels), glm::length(ddy_texels));
+
+	float lod = glm::log2(maxLength);
+
+	// 调整因子（可调节）
+	float adjustment = -0.5f;  
+
+	lod = lod + adjustment;
+	lod = glm::max(lod, 0.0f);  // 确保不低于0
+
+	return lod;
 }

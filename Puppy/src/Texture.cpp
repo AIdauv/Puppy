@@ -73,13 +73,11 @@ glm::vec3 Texture::sample(float u, float v) const {
 	switch (sampleMode)
 	{
 	case Nearest:
-		sampleNearest(u, v, data, width, height);
-		break;
+		return sampleNearest(u, v, data, width, height);
 	case Bilinear:
-		sampleBilinear(u, v, data, width, height);
-		break;
+		return sampleBilinear(u, v, data, width, height);
 	default:
-		break;
+		return { 1, 0, 1 };
 	}
 }
 
@@ -198,7 +196,7 @@ void Texture::generateMipmapLevel(int sourceLevel) {
 		for (int x = 0; x < dstWidth; x++) {
 
 			int srcX0 = x * 2;
-			int srcY0 = x * 2;
+			int srcY0 = y * 2;
 			int srcX1 = std::min(srcX0 + 1, srcWidth - 1);
 			int srcY1 = std::min(srcY0 + 1, srcHeight - 1);
 

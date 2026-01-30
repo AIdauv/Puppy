@@ -42,12 +42,15 @@ struct FragmentShaderInput {
 	glm::vec3 color;       
 	glm::vec3 worldNorm;      
 	glm::vec2 texcoord;    
+	
+	float lod;
 
 	FragmentShaderInput() 
 		: worldPos(0, 0, 0), 
 		color(1, 1, 1), 
 		worldNorm(0, 1, 0), 
-		texcoord(0, 0) {}
+		texcoord(0, 0), 
+		lod(0.0f) {}
 };
 
 struct Triangle3D

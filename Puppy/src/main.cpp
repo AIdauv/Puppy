@@ -47,6 +47,7 @@ int main(int argc, char* argv[]) {
     Texture texture;
     texture.loadFromFile("texture/1.jpg");
     texture.setSampleMode(SampleMode::Bilinear);
+    texture.generateMipmaps();
     //texture.createSolidColor(256, 256, glm::vec3(1.0f, 0.5f, 0.0f));
     //texture.createCheckerboard(256, 256, 32, 
     //    glm::vec3(0.8f, 0.2f, 0.2f), 
@@ -70,9 +71,9 @@ int main(int argc, char* argv[]) {
     // 8. 模型测试
     Model model;
     model.createCube(1);
-    model.setPosition(glm::vec3(-1, 0, 0));
+    model.setPosition(glm::vec3(0, 0, -3));
     float rotationAngle = 0.0f;
-    model.setRotation(glm::vec3(0.0f, 40.0f, 0.0f));
+    model.setRotation(glm::vec3(0.0f, 70.0f, 0.0f));
     model.setScale(glm::vec3(1.0, 1.0, 1.0));
     glm::mat4 modelMat = model.getModelMatrix();
 
@@ -152,8 +153,8 @@ int main(int argc, char* argv[]) {
         }
 
         // 更新旋转
-        //rotationAngle += 60.0f * deltaTime;  // 60度/秒
-        //model.setRotation(glm::vec3(0, rotationAngle, 0));
+        rotationAngle += 60.0f * deltaTime;  // 60度/秒
+        model.setRotation(glm::vec3(0, rotationAngle, 0));
 
         // 更新着色器上下文
         context.modelMatrix = model.getModelMatrix();
