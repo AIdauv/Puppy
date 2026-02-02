@@ -29,10 +29,27 @@ glm::vec3 PhongShader::fragmentShader(const FragmentShaderInput& fragment,
 	glm::vec3 baseColor;
 
 	if (context.texture && context.useTexture) {
-		if (context.texture->getMipLevels() > 0) {
-			baseColor = context.texture->sampleMipmap(fragment.texcoord.x,
+		if (context.useMipmap && context.texture->getMipLevels() > 1) {
+			// 计算LOD
+			glm::vec2 textureSize = {
+				context.texture->getWidth(), 
+				context.texture->getHeight() 
+			};
+			
+			float lod = context.texture->calculateLOD(
+				fragment.texcoordGradX, 
+				fragment.texcoordGradY, 
+				textureSize
+			);
+
+			lod += context.lodBias;
+
+			// 使用Mipmap采样
+			baseColor = context.texture->sampleMipmap(
+				fragment.texcoord.x,
 				fragment.texcoord.y,
-				fragment.lod);
+				lod
+			);
 		}
 		else {
 			baseColor = context.texture->sample(fragment.texcoord.x, fragment.texcoord.y);

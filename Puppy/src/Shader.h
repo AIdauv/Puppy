@@ -10,16 +10,21 @@ struct ShaderContext
 	glm::mat4 modelMatrix;
 	glm::mat4 viewMatrix;
 	glm::mat4 projectionMatrix;
-	glm::mat4 viewportMatrix;
 
 	Light light;
 	glm::vec3 cameraPos;
 
 	Texture* texture = nullptr;
+    Texture* normalMap = nullptr;
+    Texture* heightMap = nullptr;
 
 	bool usePerspective = true;
-	bool useTexture = true;
 	bool useLight = true;
+	bool useTexture = true;
+    bool useNormalMap = true;
+    bool useMipmap = true;
+    bool useMipmapForNormalMap = true;
+    float lodBias = 0.0f;
 };
 
 class Shader 

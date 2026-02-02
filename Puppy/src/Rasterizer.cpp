@@ -270,14 +270,15 @@ void Rasterizer::drawTriangle3D(const Triangle3D& tri,
 	glm::vec3 screen2 = MathUtils::viewportTransform(ndc2, width, height);
 	
 	glm::vec2 triangleGradX, triangleGradY;  // 三角形整体梯度
-	glm::vec2 textureSize;
-	float lodForBlock = 0.0f;  // 块内lod
+	bool needGrad = needGradient(context);
 	
-	// 如果有mipmap
-	if (context.texture && context.useTexture && context.texture->getMipLevels() > 0) {
+	if (needGrad) {
 		// 计算三角形整体梯度（用于备用）
-		computeTriangleGradient(vo0, vo1, vo2, screen0, screen1, screen2, triangleGradX, triangleGradY);
-		textureSize = { context.texture->getWidth(), context.texture->getHeight() };
+		computeTriangleGradient(
+			vo0, vo1, vo2, 
+			screen0, screen1, screen2, 
+			triangleGradX, triangleGradY
+		);
 	}
 	
 	int minX, minY, maxX, maxY;
@@ -290,8 +291,10 @@ void Rasterizer::drawTriangle3D(const Triangle3D& tri,
 	for (int blockY = minY; blockY <= maxY; blockY+=2) {
 		for (int blockX = minX; blockX <= maxX; blockX+=2) {
 			
-			// 如果有mipmap
-			if (context.texture && context.useTexture && context.texture->getMipLevels() > 0) {
+			// 该块的纹理坐标梯度
+			glm::vec2 texcoordGradX(0.0f), texcoordGradY(0.0f);
+
+			if (needGrad) {
 				// 2x2块的四个像素中心点
 				glm::vec2 p00(blockX + 0.5f, blockY + 0.5f);
 				glm::vec3 bary00 = MathUtils::barycentric2D(screen0, screen1, screen2, p00);
@@ -319,10 +322,11 @@ void Rasterizer::drawTriangle3D(const Triangle3D& tri,
 					bary11 = MathUtils::barycentric2D(screen0, screen1, screen2, p11);
 				}
 
-				// 计算这个块的LOD
-					lodForBlock = computeLodForPixelQuad(bary00, bary10, bary01, bary11,
+				// 计算这个块的纹理坐标梯度
+					computeGradientForPixelQuad(bary00, bary10, bary01, bary11,
 					vo0, vo1, vo2,
-					textureSize,
+					texcoordGradX,
+					texcoordGradY,
 					triangleGradX, triangleGradY);
 			}
 			
@@ -367,8 +371,9 @@ void Rasterizer::drawTriangle3D(const Triangle3D& tri,
 								// 插值顶点属性
 								FragmentShaderInput fragment = interpolateVertex(vo0, vo1, vo2, bary, interpolatedOneOverW, context);
 
-								// 设置lod
-								fragment.lod = lodForBlock;
+								// 设置纹理坐标导数
+								fragment.texcoordGradX = texcoordGradX;
+								fragment.texcoordGradY = texcoordGradY;
 
 								glm::vec3 color = shader.fragmentShader(fragment, context);
 
@@ -415,8 +420,45 @@ FragmentShaderInput Rasterizer::interpolateVertex(const VertexShaderOutput& vo0,
 		barycentric, 
 		vo0.oneOverW, vo1.oneOverW, vo2.oneOverW, 
 		interpolatedOneOverW, context.usePerspective);
+	
+	// 插值世界空间切线
+	glm::vec3 worldTangent = Shader::interpolateAttribute(
+		vo0.worldTangent, vo1.worldTangent, vo2.worldTangent,
+		barycentric,
+		vo0.oneOverW, vo1.oneOverW, vo2.oneOverW,
+		interpolatedOneOverW, context.usePerspective);
+
+	// 构造TBN矩阵
+	glm::vec3 T = glm::normalize(worldTangent);
+	glm::vec3 N = glm::normalize(result.worldNorm);
+
+	// Gram-Schmidt正交化处理（去除平行分量，留下垂直分量，确保正交）
+	T = glm::normalize(T - N * glm::dot(N, T));
+
+	// 叉乘得到副切线（自动得到右手系）
+	glm::vec3 B = glm::normalize(glm::cross(N, T));
+
+	// 构造TBN矩阵
+	result.TBN = glm::mat3(T, B, N);
 
 	return result;
+}
+
+bool Rasterizer::needGradient(const ShaderContext& context) {
+	bool needMipmap = 
+		context.texture 
+		&& context.useTexture 
+		&& context.useMipmap 
+		&& context.texture->getMipLevels() > 0;
+
+	bool needBumpMap = context.heightMap;
+	
+	bool needMipmapForNormalMap = 
+		context.normalMap 
+		&& context.useMipmapForNormalMap 
+		&& context.normalMap->getMipLevels() > 0;
+
+	return needMipmap || needBumpMap || needMipmapForNormalMap;
 }
 
 void Rasterizer::computeTriangleGradient(const VertexShaderOutput& v0,
@@ -451,12 +493,13 @@ void Rasterizer::computeTriangleGradient(const VertexShaderOutput& v0,
 	dTdy.y = invArea * ((uv1.x - uv0.x) * (ScPos2.y - ScPos0.y) - (uv2.x - uv0.x) * (ScPos1.y - ScPos0.y));
 }
 
-float Rasterizer::computeLodForPixelQuad(const glm::vec3& bary00, const glm::vec3& bary10,
+void Rasterizer::computeGradientForPixelQuad(const glm::vec3& bary00, const glm::vec3& bary10,
 	const glm::vec3& bary01, const glm::vec3& bary11,
 	const VertexShaderOutput& vo0,
 	const VertexShaderOutput& vo1,
 	const VertexShaderOutput& vo2,
-	const glm::vec2& textureSize,
+	glm::vec2& texcoordGradX,
+	glm::vec2& texcoordGradY,
 	const glm::vec2& triangleGradX,
 	const glm::vec2& triangleGradY) {
 
@@ -525,18 +568,7 @@ float Rasterizer::computeLodForPixelQuad(const glm::vec3& bary00, const glm::vec
 		dTdy = triangleGradY;
 	}
 
-	// 4. 转换为纹素空间并计算LOD
-	glm::vec2 ddx_texels = dTdx * textureSize;
-	glm::vec2 ddy_texels = dTdy * textureSize;
-	float maxLength = glm::max(glm::length(ddx_texels), glm::length(ddy_texels));
+	texcoordGradX = dTdx;
+	texcoordGradY = dTdy;
 
-	float lod = glm::log2(maxLength);
-
-	// 调整因子（可调节）
-	float adjustment = -0.5f;  
-
-	lod = lod + adjustment;
-	lod = glm::max(lod, 0.0f);  // 确保不低于0
-
-	return lod;
 }

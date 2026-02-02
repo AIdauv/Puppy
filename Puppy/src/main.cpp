@@ -9,6 +9,7 @@
 #include "Shader.h"
 #include "SimpleShader.h"
 #include "PhongShader.h"
+#include "NormalMappingShader.h"
 #include <iostream>
 #include <chrono>
 #include <glm/gtc/matrix_transform.hpp> 
@@ -45,7 +46,8 @@ int main(int argc, char* argv[]) {
 
     // 6. 创建纹理
     Texture texture;
-    texture.loadFromFile("texture/1.jpg");
+    //texture.loadFromFile("texture/1.jpg");
+    texture.loadFromFile("texture/Bricks102_1K-JPG_Color.jpg");
     texture.setSampleMode(SampleMode::Bilinear);
     texture.generateMipmaps();
     //texture.createSolidColor(256, 256, glm::vec3(1.0f, 0.5f, 0.0f));
@@ -53,8 +55,20 @@ int main(int argc, char* argv[]) {
     //    glm::vec3(0.8f, 0.2f, 0.2f), 
     //    glm::vec3(0.2f, 0.2f, 0.8f));
 
+    // 7. 创建法线贴图与凹凸贴图
+    Texture normalMap;
+    normalMap.loadFromFile("texture/Bricks102_1K-JPG_NormalGL.jpg");
+    normalMap.setSampleMode(SampleMode::Bilinear);
+    normalMap.generateMipmaps();
 
-    // 7. 创建一些3D三角形进行测试
+    Texture heightMap;
+    heightMap.createCheckerboard(256, 256, 32,
+        glm::vec3(0.3f, 0.3f, 0.3f),  // 模拟低洼处
+        glm::vec3(0.7f, 0.7f, 0.7f)); // 模拟高处
+    heightMap.setSampleMode(SampleMode::Bilinear);
+
+
+    // 8. 创建一些3D三角形进行测试
      
     // 逆时针三角形（正面朝镜头）
     Triangle3D tri1;
@@ -68,32 +82,27 @@ int main(int argc, char* argv[]) {
     tri2.v1 = Vertex3D(glm::vec3(0.0f, 0.5f, -1.5f), glm::vec3(1.0f, 0.0f, 1.0f));  // 注意：交换了顶点顺序
     tri2.v2 = Vertex3D(glm::vec3(0.5f, -0.5f, -0.75f), glm::vec3(0.0f, 1.0f, 1.0f));
     
-    // 8. 模型测试
+    // 9. 模型测试
     Model model;
-    model.createCube(1);
-    model.setPosition(glm::vec3(0, 0, -3));
+    model.createCube(2);
+    model.setPosition(glm::vec3(-1, 0, -3));
     float rotationAngle = 0.0f;
-    model.setRotation(glm::vec3(0.0f, 70.0f, 0.0f));
+    model.setRotation(glm::vec3(0.0f, 60.0f, 0.0f));
     model.setScale(glm::vec3(1.0, 1.0, 1.0));
     glm::mat4 modelMat = model.getModelMatrix();
 
 
-    // 9. 创建着色器
-    std::unique_ptr<Shader> currentShader;
-    int shaderMode = 2;  // 0: Simple, 1: Texture, 2: Phong
+    // 10. 创建着色器
+    std::unique_ptr<NormalMappingShader> shader = std::make_unique<NormalMappingShader>();
 
-    if (shaderMode == 0) {
-        currentShader = std::make_unique<SimpleShader>();
-        std::cout << "使用简单着色器" << std::endl;
-    }
-    else if (shaderMode == 1) {
-        currentShader = std::make_unique<TextureShader>();
-        std::cout << "使用纹理着色器" << std::endl;
-    }
-    else {
-        currentShader = std::make_unique<PhongShader>();
-        std::cout << "使用Phong着色器" << std::endl;
-    }
+    // 设置着色器参数
+    shader->setNormalMode(NormalMode::NORMAL_MAP);  // 初始模式：法线贴图
+    shader->setNormalMapStrength(1.0f);
+    shader->setBumpMapStrength(1.0f);
+    shader->setBumpScale(1.0f);
+    shader->setBumpStrength(15.0f);
+    shader->setHybridWeight(0.5f);
+
 
     // 着色器上下文
     ShaderContext context;
@@ -103,9 +112,15 @@ int main(int argc, char* argv[]) {
     context.light = light;
     context.cameraPos = camera.getPosition();
     context.texture = &texture;
+    context.normalMap = &normalMap;
+    context.heightMap = &heightMap;
     context.usePerspective = true;
-    context.useTexture = true;
     context.useLight = true;
+    context.useTexture = true;
+    context.useNormalMap = true;
+    context.useMipmap = true;
+    context.useMipmapForNormalMap = true;
+    context.lodBias = 0.0f;
 
 
     std::cout << "软光栅化器 v0.3 - 着色与纹理版本" << std::endl;
@@ -174,7 +189,7 @@ int main(int argc, char* argv[]) {
         // 绘制所有三角形
         
         for (const Triangle3D& tri : model.getTriangles()) {
-            rasterizer.drawTriangle3D(tri, *currentShader, context, framebufferMSAA,
+            rasterizer.drawTriangle3D(tri, *shader, context, framebufferMSAA,
                 MathUtils::CullingMode::BACK);
         }
 

@@ -7,14 +7,25 @@ struct Vertex3D
 	glm::vec3 position;
 	glm::vec3 color;
 	glm::vec3 normal;
+	glm::vec3 tangent;         
 	glm::vec2 texcoord;
 
 	Vertex3D() 
-		: position(0, 0, 0), color(1, 1, 1), normal(0, 1, 0), texcoord(0, 0) {}
+		: position(0, 0, 0), color(1, 1, 1), 
+		normal(0, 1, 0), tangent(1, 0, 0), 
+		texcoord(0, 0) {}
+
 	Vertex3D(glm::vec3 pos, glm::vec3 clr) 
-		: position(pos), color(clr), normal(0, 1, 0), texcoord(0, 0) {}
-	Vertex3D(glm::vec3 pos, glm::vec3 clr, glm::vec3 norm, glm::vec2 tex) 
-		: position(pos), color(clr), normal(norm), texcoord(tex) {}
+		: position(pos), color(clr), normal(0, 1, 0), 
+		tangent(1, 0, 0), texcoord(0, 0) {}
+
+	Vertex3D(
+		glm::vec3 pos, glm::vec3 clr, 
+		glm::vec3 norm, glm::vec3 tan, 
+		glm::vec2 tex
+	) 
+		: position(pos), color(clr), normal(norm), 
+		tangent(tan), texcoord(tex) {}
 
 };
 
@@ -24,6 +35,7 @@ struct VertexShaderOutput
 	glm::vec3 worldPos;  // 世界坐标
 	glm::vec3 color;
 	glm::vec3 worldNorm;  // 世界空间法线
+	glm::vec3 worldTangent;  // 世界空间切线
 	glm::vec2 texcoord;
 
 	float oneOverW;  // 1/w，用于透视矫正
@@ -33,6 +45,7 @@ struct VertexShaderOutput
 		worldPos(0, 0, 0), 
 		color(1, 1, 1), 
 		worldNorm(0, 1, 0), 
+		worldTangent(1, 0, 0), 
 		texcoord(0, 0), 
 		oneOverW(1.0f) {}
 };
@@ -43,14 +56,19 @@ struct FragmentShaderInput {
 	glm::vec3 worldNorm;      
 	glm::vec2 texcoord;    
 	
-	float lod;
+	glm::vec2 texcoordGradX;
+	glm::vec2 texcoordGradY;
+
+	glm::mat3 TBN;
 
 	FragmentShaderInput() 
 		: worldPos(0, 0, 0), 
 		color(1, 1, 1), 
 		worldNorm(0, 1, 0), 
 		texcoord(0, 0), 
-		lod(0.0f) {}
+		texcoordGradX(0, 0),
+		texcoordGradY(0, 0),
+		TBN(1.0f) {}
 };
 
 struct Triangle3D

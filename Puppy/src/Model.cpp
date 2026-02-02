@@ -17,6 +17,7 @@ void Model::createCube(float size) {
     // 创建6个面的三角形，直接复用位置，但创建不同的法线和纹理坐标
     auto createFace = [&](int p0, int p1, int p2, int p3,
         const glm::vec3& normal,
+        const glm::vec3& tangent,
         const glm::vec2& tex0, const glm::vec2& tex1,
         const glm::vec2& tex2, const glm::vec2& tex3,
         const glm::vec3& color) {
@@ -28,6 +29,7 @@ void Model::createCube(float size) {
             v3.position = positions[p3];
 
             v0.normal = v1.normal = v2.normal = v3.normal = normal;
+            v0.tangent = v1.tangent = v2.tangent = v3.tangent = tangent;
 
             v0.texcoord = tex0;
             v1.texcoord = tex1;
@@ -42,22 +44,22 @@ void Model::createCube(float size) {
         };
 
     // 创建6个面
-    createFace(0, 1, 2, 3, glm::vec3(0, 0, 1),  // 前
+    createFace(0, 1, 2, 3, glm::vec3(0, 0, 1), glm::vec3(1, 0, 0), // 前
         { 0,0 }, { 1,0 }, { 1,1 }, { 0,1 }, { 1,0,0 });
 
-    createFace(5, 4, 7, 6, glm::vec3(0, 0, -1),   // 后
+    createFace(5, 4, 7, 6, glm::vec3(0, 0, -1), glm::vec3(-1, 0, 0),  // 后
         { 0,0 }, { 1,0 }, { 1,1 }, { 0,1 }, { 0,1,0 });
 
-    createFace(4, 0, 3, 7, glm::vec3(-1, 0, 0),  // 左
+    createFace(4, 0, 3, 7, glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1), // 左
         { 0,0 }, { 1,0 }, { 1,1 }, { 0,1 }, { 0,0,1 });
 
-    createFace(1, 5, 6, 2, glm::vec3(1, 0, 0),   // 右
+    createFace(1, 5, 6, 2, glm::vec3(1, 0, 0), glm::vec3(0, 0, -1),  // 右
         { 0,0 }, { 1,0 }, { 1,1 }, { 0,1 }, { 1,1,0 });
 
-    createFace(4, 5, 1, 0, glm::vec3(0, -1, 0),  // 下
+    createFace(4, 5, 1, 0, glm::vec3(0, -1, 0), glm::vec3(1, 0, 0), // 下
         { 0,0 }, { 1,0 }, { 1,1 }, { 0,1 }, { 1,0,1 });
 
-    createFace(3, 2, 6, 7, glm::vec3(0, 1, 0),   // 上
+    createFace(3, 2, 6, 7, glm::vec3(0, 1, 0), glm::vec3(1, 0, 0),  // 上
         { 0,0 }, { 1,0 }, { 1,1 }, { 0,1 }, { 0,1,1 });
 }
 

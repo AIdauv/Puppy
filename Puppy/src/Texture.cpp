@@ -73,9 +73,9 @@ glm::vec3 Texture::sample(float u, float v) const {
 	switch (sampleMode)
 	{
 	case Nearest:
-		return sampleNearest(u, v, data, width, height);
+		return sampleNearest(u, v, data, width, height, channels);
 	case Bilinear:
-		return sampleBilinear(u, v, data, width, height);
+		return sampleBilinear(u, v, data, width, height, channels);
 	default:
 		return { 1, 0, 1 };
 	}
@@ -137,7 +137,20 @@ glm::vec3 Texture::sampleMipmap(float u, float v, float lod) const {
 	return glm::mix(color0, color1, t);
 }
 
-glm::vec3 Texture::sampleNearest(float u, float v, const std::vector<uint8_t>& data, int width, int height) const {
+float Texture::calculateLOD(const glm::vec2& dTdx, const glm::vec2& dTdy, const glm::vec2& textureSize) const {
+	// 转换为纹素空间并计算LOD
+	glm::vec2 ddx_texels = dTdx * textureSize;
+	glm::vec2 ddy_texels = dTdy * textureSize;
+	float maxLength = glm::max(glm::length(ddx_texels), glm::length(ddy_texels));
+
+	float lod = glm::log2(maxLength);
+
+	lod = glm::max(lod, 0.0f);  // 确保不低于0
+
+	return lod;
+}
+
+glm::vec3 Texture::sampleNearest(float u, float v, const std::vector<uint8_t>& data, int width, int height, int channels) const {
 
 	// 最近邻
 	int x = static_cast<int>(u * width) % width;
@@ -146,10 +159,10 @@ glm::vec3 Texture::sampleNearest(float u, float v, const std::vector<uint8_t>& d
 	x = glm::clamp(x, 0, width - 1);
 	y = glm::clamp(y, 0, height - 1);
 
-	return getPixel(x, y, width, data);
+	return getPixel(x, y, width, channels, data);
 }
 
-glm::vec3 Texture::sampleBilinear(float u, float v, const std::vector<uint8_t>& data, int width, int height) const {
+glm::vec3 Texture::sampleBilinear(float u, float v, const std::vector<uint8_t>& data, int width, int height, int channels) const {
 
 	u = glm::fract(u);  // 取小数部分
 	v = glm::fract(v);
@@ -170,10 +183,10 @@ glm::vec3 Texture::sampleBilinear(float u, float v, const std::vector<uint8_t>& 
 	float fx = x - x0;
 	float fy = y - y0;
 
-	glm::vec3 p00 = getPixel(x0, y0, width, data);
-	glm::vec3 p10 = getPixel(x1, y0, width, data);
-	glm::vec3 p01 = getPixel(x0, y1, width, data);
-	glm::vec3 p11 = getPixel(x1, y1, width, data);
+	glm::vec3 p00 = getPixel(x0, y0, width, channels, data);
+	glm::vec3 p10 = getPixel(x1, y0, width, channels, data);
+	glm::vec3 p01 = getPixel(x0, y1, width, channels, data);
+	glm::vec3 p11 = getPixel(x1, y1, width, channels, data);
 
 	glm::vec3 clr0 = glm::mix(p00, p10, fx);
 	glm::vec3 clr1 = glm::mix(p01, p11, fx);
@@ -250,11 +263,11 @@ glm::vec3 Texture::sampleLevel(float u, float v, int level) const {
 	int h = mipHeights[level];
 	const std::vector<uint8_t>& levelData = mipmaps[level];
 
-	return sampleBilinear(u, v, levelData, w, h);
+	return sampleBilinear(u, v, levelData, w, h, channels);  // Mipmap通道数与原图相同
 	
 }
 
-glm::vec3 Texture::getPixel(int x, int y, int width, const std::vector<uint8_t>& data) const {
+glm::vec3 Texture::getPixel(int x, int y, int width, int channels, const std::vector<uint8_t>& data) const {
 	int index = (y * width + x) * channels;
 
 	if (channels >= 3) {

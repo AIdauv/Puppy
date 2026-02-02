@@ -51,6 +51,8 @@ private:
 		float interpolatedOneOverW,
 		const ShaderContext& context);
 
+	bool needGradient(const ShaderContext& context);
+
 	// 三角形梯度计算（三角形整体的纹理坐标梯度，每个三角形只需计算一次）
 	static void computeTriangleGradient(const VertexShaderOutput& v0,
 		const VertexShaderOutput& v1,
@@ -60,13 +62,14 @@ private:
 		const glm::vec2& ScPos2,
 		glm::vec2& dTdx, glm::vec2& dTdy);
 
-	// 像素四元组LOD计算
-	static float computeLodForPixelQuad(const glm::vec3& bary00, const glm::vec3& bary10,
+	// 像素四元组梯度计算（2x2块的纹理坐标梯度，每个块计算一次）
+	static void computeGradientForPixelQuad(const glm::vec3& bary00, const glm::vec3& bary10,
 		const glm::vec3& bary01, const glm::vec3& bary11,
 		const VertexShaderOutput& vo0,
 		const VertexShaderOutput& vo1,
 		const VertexShaderOutput& vo2,
-		const glm::vec2& textureSize,
+		glm::vec2& texcoordGradX,
+		glm::vec2& texcoordGradY,
 		const glm::vec2& triangleGradX,
 		const glm::vec2& triangleGradY);
 };

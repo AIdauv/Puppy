@@ -27,6 +27,9 @@ public:
 	void generateMipmaps();
 	glm::vec3 sampleMipmap(float u, float v, float lod) const;
 
+	// º∆À„LOD
+	float calculateLOD(const glm::vec2& dTdx, const glm::vec2& dTdy, const glm::vec2& textureSize) const;
+
 	int getWidth() const { return width; }
 	int getHeight() const { return height; }
 	int getMipLevels() const { return mipLevels; }
@@ -44,10 +47,10 @@ private:
 	std::vector<int> mipHeights;
 	int mipLevels = 0;
 
-	glm::vec3 getPixel(int x, int y, int width, const std::vector<uint8_t>& data) const;
+	glm::vec3 getPixel(int x, int y, int width, int channels, const std::vector<uint8_t>& data) const;
 
-	glm::vec3 sampleNearest(float u, float v, const std::vector<uint8_t>& data, int width, int height) const;
-	glm::vec3 sampleBilinear(float u, float v, const std::vector<uint8_t>& data, int width, int height) const;
+	glm::vec3 sampleNearest(float u, float v, const std::vector<uint8_t>& data, int width, int height, int channels) const;
+	glm::vec3 sampleBilinear(float u, float v, const std::vector<uint8_t>& data, int width, int height, int channels) const;
 
 	void generateMipmapLevel(int sourceLevel);
 	glm::vec3 sampleLevel(float u, float v, int level) const;
