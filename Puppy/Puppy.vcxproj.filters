@@ -18,10 +18,31 @@
     <ClInclude Include="src\Framebuffer.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\Light.h">
+      <Filter>src</Filter>
+    </ClInclude>
     <ClInclude Include="src\MathUtils.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\Model.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MultisampleFramebuffer.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\NormalMappingShader.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PhongShader.h">
+      <Filter>src</Filter>
+    </ClInclude>
     <ClInclude Include="src\Rasterizer.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Shader.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SimpleShader.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\Texture.h">
@@ -33,18 +54,9 @@
     <ClInclude Include="src\Window.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\Light.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="vendor\stb_image\stb_image.h">
       <Filter>vendor\stb_image</Filter>
     </ClInclude>
-    <ClInclude Include="src\Shader.h" />
-    <ClInclude Include="src\Model.h" />
-    <ClInclude Include="src\SimpleShader.h" />
-    <ClInclude Include="src\PhongShader.h" />
-    <ClInclude Include="src\MultisampleFramebuffer.h" />
-    <ClInclude Include="src\NormalMappingShader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp">
@@ -53,7 +65,22 @@
     <ClCompile Include="src\Framebuffer.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Model.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MultisampleFramebuffer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\NormalMappingShader.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PhongShader.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="src\Rasterizer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SimpleShader.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\Texture.cpp">
@@ -68,10 +95,5 @@
     <ClCompile Include="vendor\stb_image\stb_image.cpp">
       <Filter>vendor\stb_image</Filter>
     </ClCompile>
-    <ClCompile Include="src\Model.cpp" />
-    <ClCompile Include="src\SimpleShader.cpp" />
-    <ClCompile Include="src\PhongShader.cpp" />
-    <ClCompile Include="src\MultisampleFramebuffer.cpp" />
-    <ClCompile Include="src\NormalMappingShader.cpp" />
   </ItemGroup>
 </Project>
