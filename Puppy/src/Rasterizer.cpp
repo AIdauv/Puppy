@@ -432,7 +432,7 @@ FragmentShaderInput Rasterizer::interpolateVertex(const VertexShaderOutput& vo0,
 	glm::vec3 T = glm::normalize(worldTangent);
 	glm::vec3 N = glm::normalize(result.worldNorm);
 
-	// Gram-Schmidt正交化处理（去除平行分量，留下垂直分量，确保正交）
+	// Gram-Schmidt正交化处理（去除平行分量，留下垂直分量，确保正交），修正插值引起的法线/切线非正交误差
 	T = glm::normalize(T - N * glm::dot(N, T));
 
 	// 叉乘得到副切线（自动得到右手系）

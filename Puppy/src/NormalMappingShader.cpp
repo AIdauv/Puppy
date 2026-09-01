@@ -13,11 +13,11 @@ VertexShaderOutput NormalMappingShader::vertexShader(const Vertex3D& vertex,
 
     result.oneOverW = 1.0f / clipPos.w;
 
-    // 变换法线、切线、副切线到世界坐标（需要模型矩阵的逆转置）
+    // 变换法线（需要模型矩阵的逆转置）、切线、到世界坐标
     glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(context.modelMatrix)));
     
     result.worldNorm = glm::normalize(normalMatrix * vertex.normal);
-    result.worldTangent = glm::normalize(normalMatrix * vertex.tangent);
+    result.worldTangent = glm::normalize(glm::mat3(context.modelMatrix) * vertex.tangent);
 
     result.texcoord = vertex.texcoord;
     result.color = vertex.color;
