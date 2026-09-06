@@ -38,13 +38,15 @@
   - 利用屏幕空间纹理坐标梯度（`dTdx`, `dTdy`）动态计算 LOD（细节层次），有效抑制远处走样
 
 <!-- Mipmap 对比 -->
-<p align="center">
-  <img src="picture/Mipmap_off.jpg" width="45%" alt="Mipmap：关">
-  <img src="picture/Mipmap_on.jpg" width="45%" alt="Mipmap：开">
-</p>
-<p align="center" style="display: flex; justify-content: center; gap: 20%; margin: 0 auto;">
-  <span style="white-space: nowrap;"><b>Mipmap：关</b></span>
-  <span style="white-space: nowrap;"><b>Mipmap：开</b></span>
+<p align="center" style="display: flex; justify-content: center; gap: 5%;">
+  <span style="display: flex; flex-direction: column; align-items: center; width: 45%;">
+    <img src="picture/Mipmap_off.jpg" width="100%" alt="Mipmap：关">
+    <b>Mipmap：关</b>
+  </span>
+  <span style="display: flex; flex-direction: column; align-items: center; width: 45%;">
+    <img src="picture/Mipmap_on.jpg" width="100%" alt="Mipmap：开">
+    <b>Mipmap：开</b>
+  </span>
 </p>
 
 - **法线贴图与切线空间**
@@ -53,13 +55,15 @@
   - Gram-Schmidt 正交化确保 TBN 矩阵稳定性
 
 <!-- 法线贴图对比 -->
-<p align="center">
-  <img src="picture/NormalMap_off.jpg" width="45%" alt="仅顶点法线（无细节）">
-  <img src="picture/NormalMap_on.jpg" width="45%" alt="法线贴图（细节丰富）">
-</p>
-<p align="center" style="display: flex; justify-content: center; gap: 20%; margin: 0 auto;">
-  <span style="white-space: nowrap;"><b>仅顶点法线（无细节）</b></span>
-  <span style="white-space: nowrap;"><b>法线贴图（细节丰富）</b></span>
+<p align="center" style="display: flex; justify-content: center; gap: 5%;">
+  <span style="display: flex; flex-direction: column; align-items: center; width: 45%;">
+    <img src="picture/NormalMap_off.jpg" width="100%" alt="仅顶点法线（无细节）">
+    <b>仅顶点法线（无细节）</b>
+  </span>
+  <span style="display: flex; flex-direction: column; align-items: center; width: 45%;">
+    <img src="picture/NormalMap_on.jpg" width="100%" alt="法线贴图（细节丰富）">
+    <b>法线贴图（细节丰富）</b>
+  </span>
 </p>
 
 - **多重采样抗锯齿（MSAA）**
@@ -67,13 +71,15 @@
   - 独立采样点深度测试，最终颜色解析（Resolve）平均输出
 
 <!-- MSAA 对比 -->
-<p align="center">
-  <img src="picture/MSAA_off.jpg" width="45%" alt="MSAA：关">
-  <img src="picture/MSAA_on.jpg" width="45%" alt="MSAA：8x">
-</p>
-<p align="center" style="display: flex; justify-content: center; gap: 20%; margin: 0 auto;">
-  <span style="white-space: nowrap;"><b>MSAA：关</b></span>
-  <span style="white-space: nowrap;"><b>MSAA：8x</b></span>
+<p align="center" style="display: flex; justify-content: center; gap: 5%;">
+  <span style="display: flex; flex-direction: column; align-items: center; width: 45%;">
+    <img src="picture/MSAA_off.jpg" width="100%" alt="MSAA：关">
+    <b>MSAA：关</b>
+  </span>
+  <span style="display: flex; flex-direction: column; align-items: center; width: 45%;">
+    <img src="picture/MSAA_on.jpg" width="100%" alt="MSAA：8x">
+    <b>MSAA：8x</b>
+  </span>
 </p>
 
 - **交互与控制**
