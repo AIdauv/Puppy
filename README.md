@@ -5,7 +5,12 @@
 
 一个从零实现的 CPU 软光栅渲染器，用于深入理解 3D 图形管线的底层原理。支持完整的 MVP 变换、透视校正插值、纹理映射、法线贴图、多重采样抗锯齿（MSAA）以及可扩展的着色器框架。
 
-![渲染效果预览](picture/preview.png)
+<p align="center">
+  <img src="picture/preview.jpg" width="80%" alt="渲染效果预览">
+</p>
+<p align="center">
+  <b>渲染效果预览</b>
+</p>
 
 ## ✨ 核心特性
 
@@ -20,27 +25,56 @@
   - 内置实现：`SimpleShader`（纯色）、`TextureShader`（纹理）、`PhongShader`（Blinn-Phong 光照）
   - **`NormalMappingShader`**：支持 4 种法线计算模式（顶点法线 / 法线贴图 / 高度图实时推导 / 混合）
 
-  ![无光照 与 Blinn-Phong 光照对比](picture/shader_cmp.jpg)
+<p align="center">
+  <img src="picture/shader_cmp.jpg" width="80%" alt="无光照 与 Blinn-Phong 光照对比">
+</p>
+<p align="center">
+  <b>无光照 与 Blinn-Phong 光照对比</b>
+</p>
 
 - **纹理与 Mipmap**
   - 双线性（Bilinear）与三线性（Trilinear）纹理过滤
   - 基于盒式滤波（Box Filter）自动生成 Mipmap 链
   - 利用屏幕空间纹理坐标梯度（`dTdx`, `dTdy`）动态计算 LOD（细节层次），有效抑制远处走样
 
-  ![Mipmap：关](picture/Mipmap_off.jpg) ![Mipmap：开](picture/Mipmap_on.jpg)
+<!-- Mipmap 对比 -->
+<p align="center">
+  <img src="picture/Mipmap_off.jpg" width="45%" alt="Mipmap：关">
+  <img src="picture/Mipmap_on.jpg" width="45%" alt="Mipmap：开">
+</p>
+<p align="center" style="display: flex; justify-content: center; gap: 20%; margin: 0 auto;">
+  <span style="white-space: nowrap;"><b>Mipmap：关</b></span>
+  <span style="white-space: nowrap;"><b>Mipmap：开</b></span>
+</p>
 
 - **法线贴图与切线空间**
   - 构建 TBN 矩阵，将切线空间法线转换到世界空间
   - 支持从高度图（Bump Map）实时计算法线（梯度差分法）
   - Gram-Schmidt 正交化确保 TBN 矩阵稳定性
 
-  ![仅顶点法线（无细节）](picture/NormalMap_off.jpg) ![法线贴图（细节丰富）](picture/NormalMap_on.jpg)
+<!-- 法线贴图对比 -->
+<p align="center">
+  <img src="picture/NormalMap_off.jpg" width="45%" alt="仅顶点法线（无细节）">
+  <img src="picture/NormalMap_on.jpg" width="45%" alt="法线贴图（细节丰富）">
+</p>
+<p align="center" style="display: flex; justify-content: center; gap: 20%; margin: 0 auto;">
+  <span style="white-space: nowrap;"><b>仅顶点法线（无细节）</b></span>
+  <span style="white-space: nowrap;"><b>法线贴图（细节丰富）</b></span>
+</p>
 
 - **多重采样抗锯齿（MSAA）**
   - 支持 4x / 8x 采样，采用优化的旋转网格（Rotated Grid）子采样模式
   - 独立采样点深度测试，最终颜色解析（Resolve）平均输出
 
-  ![MSAA：关](picture/MSAA_off.jpg) ![MSAA：8x](picture/MSAA_on.jpg) 
+<!-- MSAA 对比 -->
+<p align="center">
+  <img src="picture/MSAA_off.jpg" width="45%" alt="MSAA：关">
+  <img src="picture/MSAA_on.jpg" width="45%" alt="MSAA：8x">
+</p>
+<p align="center" style="display: flex; justify-content: center; gap: 20%; margin: 0 auto;">
+  <span style="white-space: nowrap;"><b>MSAA：关</b></span>
+  <span style="white-space: nowrap;"><b>MSAA：8x</b></span>
+</p>
 
 - **交互与控制**
   - 基于 SDL2 的窗口与输入管理
