@@ -38,18 +38,18 @@
   - 利用屏幕空间纹理坐标梯度（`dTdx`, `dTdy`）动态计算 LOD（细节层次），有效抑制远处走样
 
 <!-- Mipmap 对比 -->
-<div align="center">
-  <div style="display: inline-block; width: 45%; margin: 0 2%; vertical-align: top;">
-    <img src="picture/Mipmap_off.jpg" style="width: 100%;" alt="Mipmap：关">
-    <br>
-    <b>Mipmap：关</b>
-  </div>
-  <div style="display: inline-block; width: 45%; margin: 0 2%; vertical-align: top;">
-    <img src="picture/Mipmap_on.jpg" style="width: 100%;" alt="Mipmap：开">
-    <br>
-    <b>Mipmap：开</b>
-  </div>
-</div>
+<table align="center">
+  <tr>
+    <td align="center" style="padding: 10px; width: 50%;">
+      <img src="picture/Mipmap_off.jpg" style="width: 100%; max-width: 600px;" alt="Mipmap：关">
+      <br><b>Mipmap：关</b>
+    </td>
+    <td align="center" style="padding: 10px; width: 50%;">
+      <img src="picture/Mipmap_on.jpg" style="width: 100%; max-width: 600px;" alt="Mipmap：开">
+      <br><b>Mipmap：开</b>
+    </td>
+  </tr>
+</table>
 
 - **法线贴图与切线空间**
   - 构建 TBN 矩阵，将切线空间法线转换到世界空间
@@ -57,36 +57,37 @@
   - Gram-Schmidt 正交化确保 TBN 矩阵稳定性
 
 <!-- 法线贴图对比 -->
-<div align="center">
-  <div style="display: inline-block; width: 45%; margin: 0 2%; vertical-align: top;">
-    <img src="picture/NormalMap_off.jpg" style="width: 100%;" alt="仅顶点法线（无细节）">
-    <br>
-    <b>仅顶点法线（无细节）</b>
-  </div>
-  <div style="display: inline-block; width: 45%; margin: 0 2%; vertical-align: top;">
-    <img src="picture/NormalMap_on.jpg" style="width: 100%;" alt="法线贴图（细节丰富）">
-    <br>
-    <b>法线贴图（细节丰富）</b>
-  </div>
-</div>
+<table align="center">
+  <tr>
+    <td align="center" style="padding: 10px; width: 50%;">
+      <img src="picture/NormalMap_off.jpg" style="width: 100%; max-width: 600px;" alt="仅顶点法线（无细节）">
+      <br><b>仅顶点法线（无细节）</b>
+    </td>
+    <td align="center" style="padding: 10px; width: 50%;">
+      <img src="picture/NormalMap_on.jpg" style="width: 100%; max-width: 600px;" alt="法线贴图（细节丰富）">
+      <br><b>法线贴图（细节丰富）</b>
+    </td>
+  </tr>
+</table>
 
 - **多重采样抗锯齿（MSAA）**
   - 支持 4x / 8x 采样，采用优化的旋转网格（Rotated Grid）子采样模式
   - 独立采样点深度测试，最终颜色解析（Resolve）平均输出
 
 <!-- MSAA 对比 -->
-<div align="center">
-  <div style="display: inline-block; width: 45%; margin: 0 2%; vertical-align: top;">
-    <img src="picture/MSAA_off.jpg" style="width: 100%;" alt="MSAA：关">
-    <br>
-    <b>MSAA：关</b>
-  </div>
-  <div style="display: inline-block; width: 45%; margin: 0 2%; vertical-align: top;">
-    <img src="picture/MSAA_on.jpg" style="width: 100%;" alt="MSAA：8x">
-    <br>
-    <b>MSAA：8x</b>
-  </div>
-</div>
+<table align="center">
+  <tr>
+    <td align="center" style="padding: 10px; width: 50%;">
+      <img src="picture/MSAA_off.jpg" style="width: 100%; max-width: 600px;" alt="MSAA：关">
+      <br><b>MSAA：关</b>
+    </td>
+    <td align="center" style="padding: 10px; width: 50%;">
+      <img src="picture/MSAA_on.jpg" style="width: 100%; max-width: 600px;" alt="MSAA：8x">
+      <br><b>MSAA：8x</b>
+    </td>
+  </tr>
+</table>
+
 
 - **交互与控制**
   - 基于 SDL2 的窗口与输入管理
