@@ -35,7 +35,7 @@
 - **纹理与 Mipmap**
   - 双线性（Bilinear）与三线性（Trilinear）纹理过滤
   - 基于盒式滤波（Box Filter）自动生成 Mipmap 链
-  - 利用屏幕空间纹理坐标梯度（`dTdx`, `dTdy`）动态计算 LOD（细节层次），有效抑制远处走样
+  - 利用屏幕空间纹理坐标梯度（`dT/dx`, `dT/dy`）动态计算 LOD（细节层次），有效抑制远处走样
 
 <!-- Mipmap 对比 -->
 <table align="center" style="border: none; border-collapse: collapse;">
