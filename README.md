@@ -38,13 +38,13 @@
   - 利用屏幕空间纹理坐标梯度（`dTdx`, `dTdy`）动态计算 LOD（细节层次），有效抑制远处走样
 
 <!-- Mipmap 对比 -->
-<table align="center">
+<table align="center" style="border: none; border-collapse: collapse;">
   <tr>
-    <td align="center" style="padding: 10px; width: 50%;">
+    <td align="center" style="padding: 10px; border: none; width: 50%;">
       <img src="picture/Mipmap_off.jpg" style="width: 100%; max-width: 600px;" alt="Mipmap：关">
       <br><b>Mipmap：关</b>
     </td>
-    <td align="center" style="padding: 10px; width: 50%;">
+    <td align="center" style="padding: 10px; border: none; width: 50%;">
       <img src="picture/Mipmap_on.jpg" style="width: 100%; max-width: 600px;" alt="Mipmap：开">
       <br><b>Mipmap：开</b>
     </td>
@@ -57,13 +57,13 @@
   - Gram-Schmidt 正交化确保 TBN 矩阵稳定性
 
 <!-- 法线贴图对比 -->
-<table align="center">
+<table align="center" style="border: none; border-collapse: collapse;">
   <tr>
-    <td align="center" style="padding: 10px; width: 50%;">
+    <td align="center" style="padding: 10px; border: none; width: 50%;">
       <img src="picture/NormalMap_off.jpg" style="width: 100%; max-width: 600px;" alt="仅顶点法线（无细节）">
       <br><b>仅顶点法线（无细节）</b>
     </td>
-    <td align="center" style="padding: 10px; width: 50%;">
+    <td align="center" style="padding: 10px; border: none; width: 50%;">
       <img src="picture/NormalMap_on.jpg" style="width: 100%; max-width: 600px;" alt="法线贴图（细节丰富）">
       <br><b>法线贴图（细节丰富）</b>
     </td>
@@ -75,13 +75,13 @@
   - 独立采样点深度测试，最终颜色解析（Resolve）平均输出
 
 <!-- MSAA 对比 -->
-<table align="center">
+<table align="center" style="border: none; border-collapse: collapse;">
   <tr>
-    <td align="center" style="padding: 10px; width: 50%;">
+    <td align="center" style="padding: 10px; border: none; width: 50%;">
       <img src="picture/MSAA_off.jpg" style="width: 100%; max-width: 600px;" alt="MSAA：关">
       <br><b>MSAA：关</b>
     </td>
-    <td align="center" style="padding: 10px; width: 50%;">
+    <td align="center" style="padding: 10px; border: none; width: 50%;">
       <img src="picture/MSAA_on.jpg" style="width: 100%; max-width: 600px;" alt="MSAA：8x">
       <br><b>MSAA：8x</b>
     </td>
