@@ -113,6 +113,6 @@
 ### 🚀 快速开始
 
 1. 进入项目根目录下的 `scripts/` 文件夹。
-2. 双击执行 **`GenerateProjects.bat`**（脚本会自动调用 `vendor/premake/bin/premake5.exe vs2022` 生成解决方案）。
+2. 双击执行 **`Win-GenProjects.bat`**（脚本会自动调用 `vendor/premake/bin/premake5.exe vs2022` 生成解决方案）。
 3. 返回根目录，打开生成的 `Puppy.sln` 解决方案文件。
 4. 在 Visual Studio 中按 `F5` 编译并运行。
