@@ -19,6 +19,11 @@ public:
 	void createSolidColor(int w, int h, const glm::vec3& color);
 	void createCheckerboard(int w, int h, int tileSize, 
 		const glm::vec3& color1, const glm::vec3& color2);
+	void createStripes(int w, int h, int stripeWidth, 
+		const glm::vec3& color1, const glm::vec3& color2, bool vertical = true);
+	void createFractalCheckerboard(int w, int h, int tileSize, int subDivisions,
+		const glm::vec3& color1, const glm::vec3& color2,
+		const glm::vec3& color3);
 
 	glm::vec3 sample(const glm::vec2& uv) const;
 	glm::vec3 sample(float u, float v) const;

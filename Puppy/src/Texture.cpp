@@ -61,6 +61,53 @@ void Texture::createCheckerboard(int w, int h, int tileSize,
 	}
 }
 
+void Texture::createStripes(int w, int h, int stripeWidth,
+	const glm::vec3& color1, const glm::vec3& color2,
+	bool vertical) {
+	width = w; height = h; channels = 3;
+	data.resize(w * h * 3);
+	for (int y = 0; y < h; ++y) {
+		for (int x = 0; x < w; ++x) {
+			int idx = (y * w + x) * 3;
+			int stripeIdx = vertical ? (x / stripeWidth) : (y / stripeWidth);
+			glm::vec3 col = (stripeIdx % 2 == 0) ? color1 : color2;
+			data[idx + 0] = static_cast<uint8_t>(col.r * 255);
+			data[idx + 1] = static_cast<uint8_t>(col.g * 255);
+			data[idx + 2] = static_cast<uint8_t>(col.b * 255);
+		}
+	}
+}
+
+void Texture::createFractalCheckerboard(int w, int h, int tileSize, int subDivisions,
+	const glm::vec3& color1, const glm::vec3& color2,
+	const glm::vec3& color3) {
+	width = w; height = h; channels = 3;
+	data.resize(w * h * 3);
+	// 确保 tileSize 能被 subDivisions 整除
+	int subSize = tileSize / subDivisions;
+	for (int y = 0; y < h; ++y) {
+		for (int x = 0; x < w; ++x) {
+			int tx = x / tileSize;
+			int ty = y / tileSize;
+			bool even = ((tx + ty) % 2) == 0;
+			glm::vec3 baseColor = even ? color1 : color2;
+
+			// 内部子网格
+			int sx = (x % tileSize) / subSize;
+			int sy = (y % tileSize) / subSize;
+			bool subEven = ((sx + sy) % 2) == 0;
+			// 混合第三种颜色，制造更丰富的细节
+			glm::vec3 finalColor = subEven ? baseColor : color3 * 0.6f + baseColor * 0.4f;
+
+			int idx = (y * w + x) * 3;
+			data[idx + 0] = static_cast<uint8_t>(glm::clamp(finalColor.r, 0.0f, 1.0f) * 255);
+			data[idx + 1] = static_cast<uint8_t>(glm::clamp(finalColor.g, 0.0f, 1.0f) * 255);
+			data[idx + 2] = static_cast<uint8_t>(glm::clamp(finalColor.b, 0.0f, 1.0f) * 255);
+		}
+	}
+	// 纹理自动无缝（因为 tileSize 整除宽高，且边界颜色与相对边界一致）
+}
+
 glm::vec3 Texture::sample(const glm::vec2& uv) const{
 	return sample(uv.x, uv.y);
 }

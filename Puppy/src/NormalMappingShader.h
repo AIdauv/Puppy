@@ -28,6 +28,11 @@ public:
     void setBumpStrength(float strength) { bumpStrength = strength; }
     void setHybridWeight(float weight) { hybridWeight = weight; }
 
+    void setAmbientStrength(float s) { ambientStrength = s; }
+    void setDiffuseStrength(float s) { diffuseStrength = s; }
+    void setSpecularStrength(float s) { specularStrength = s; }
+    void setShininess(float s) { shininess = s; }
+
     // 获取参数
     NormalMode getNormalMode() const { return normalMode; }
     float getNormalMapStrength() const { return normalMapStrength; }

@@ -13,6 +13,11 @@ public:
 	// bool loadFromOBJ(const std::string& filepath);
 
 	void createCube(float size = 1.0f);
+	void createGround(float width, float depth, int repeatU = 1, int repeatV = 1);
+	void createPlane(float width, float height, const glm::vec3& normal,
+		const glm::vec3& tangent = glm::vec3(1, 0, 0),
+		int repeatU = 1, int repeatV = 1);
+	void createSphere(float radius, int sectors, int stacks);
 
 	const std::vector<Triangle3D>& getTriangles() { return triangles; }
 

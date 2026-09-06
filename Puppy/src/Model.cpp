@@ -63,6 +63,103 @@ void Model::createCube(float size) {
         { 0,0 }, { 1,0 }, { 1,1 }, { 0,1 }, { 0,1,1 });
 }
 
+void Model::createGround(float width, float depth, int repeatU, int repeatV) {
+    clear();
+
+    float hw = width * 0.5f;
+    float hd = depth * 0.5f;
+    glm::vec3 normal(0, 1, 0);
+    glm::vec3 tangent(1, 0, 0);
+
+    Vertex3D v0(glm::vec3(-hw, 0, -hd), glm::vec3(1), normal, tangent, glm::vec2(0, repeatV));
+    Vertex3D v1(glm::vec3(hw, 0, -hd), glm::vec3(1), normal, tangent, glm::vec2(repeatU, repeatV));
+    Vertex3D v2(glm::vec3(hw, 0, hd), glm::vec3(1), normal, tangent, glm::vec2(repeatU, 0));
+    Vertex3D v3(glm::vec3(-hw, 0, hd), glm::vec3(1), normal, tangent, glm::vec2(0, 0));
+
+    // 逆时针顺序，法线朝上
+    addTriangle(v0, v2, v1);
+    addTriangle(v0, v3, v2);
+}
+
+void Model::createPlane(float width, float height, const glm::vec3& normal,
+    const glm::vec3& tangent, int repeatU, int repeatV) {
+    clear();
+
+    // 确保法线和切线正交（若用户传入非正交，自动修正）
+    glm::vec3 n = glm::normalize(normal);
+    glm::vec3 t = glm::normalize(tangent);
+
+    // 如果 tangent 与 normal 平行（点积绝对值接近 1），则选择一个不同的默认切线
+    if (glm::abs(glm::dot(n, t)) > 0.999f) {
+        // 尝试用 (0,1,0) 作为备用
+        t = glm::vec3(0, 1, 0);
+        if (glm::abs(glm::dot(n, t)) > 0.999f) {
+            // 如果法线也是 Y 轴，则用 (0,0,1)
+            t = glm::vec3(0, 0, 1);
+        }
+    }
+
+    // 修正切线：减去法线方向分量，再归一化
+    t = glm::normalize(t - n * glm::dot(n, t));
+    glm::vec3 b = glm::normalize(glm::cross(n, t));  // 副切线
+
+    // 构建局部坐标系，四个顶点相对于中心偏移
+    glm::vec3 center(0, 0, 0);
+    glm::vec3 halfW = t * (width * 0.5f);
+    glm::vec3 halfH = b * (height * 0.5f);
+
+    Vertex3D v0(center - halfW - halfH, glm::vec3(1), n, t, glm::vec2(0, repeatV));
+    Vertex3D v1(center + halfW - halfH, glm::vec3(1), n, t, glm::vec2(repeatU, repeatV));
+    Vertex3D v2(center + halfW + halfH, glm::vec3(1), n, t, glm::vec2(repeatU, 0));
+    Vertex3D v3(center - halfW + halfH, glm::vec3(1), n, t, glm::vec2(0, 0));
+
+    addTriangle(v0, v1, v2);
+    addTriangle(v0, v2, v3);
+}
+
+void Model::createSphere(float radius, int sectors, int stacks) {
+    clear();
+
+    std::vector<Vertex3D> vertices;
+    // 生成顶点
+    for (int i = 0; i <= stacks; ++i) {
+        float v = (float)i / stacks;
+        float theta = v * glm::pi<float>();          // 0 → π
+        float sinTheta = sin(theta);
+        float cosTheta = cos(theta);
+
+        for (int j = 0; j <= sectors; ++j) {
+            float u = (float)j / sectors;
+            float phi = u * 2.0f * glm::pi<float>(); // 0 → 2π
+            float sinPhi = sin(phi);
+            float cosPhi = cos(phi);
+
+            float x = radius * sinTheta * cosPhi;
+            float y = radius * cosTheta;
+            float z = radius * sinTheta * sinPhi;
+
+            glm::vec3 pos(x, y, z);
+            glm::vec3 normal = glm::normalize(pos);   // 球心在原点的法线
+            glm::vec2 texcoord(u, v);
+
+            vertices.emplace_back(pos, glm::vec3(1.0f), normal, glm::vec3(1, 0, 0), texcoord);
+        }
+    }
+
+    // 生成三角形索引（两个三角形构成一个四边形格）
+    for (int i = 0; i < stacks; ++i) {
+        for (int j = 0; j < sectors; ++j) {
+            int a = i * (sectors + 1) + j;
+            int b = i * (sectors + 1) + j + 1;
+            int c = (i + 1) * (sectors + 1) + j;
+            int d = (i + 1) * (sectors + 1) + j + 1;
+
+            addTriangle(vertices[a], vertices[b], vertices[c]);
+            addTriangle(vertices[b], vertices[d], vertices[c]);
+        }
+    }
+}
+
 glm::mat4 Model::getModelMatrix() const {
 	glm::mat4 model = glm::mat4(1.0f);
 

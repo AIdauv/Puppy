@@ -75,6 +75,10 @@ glm::vec3 NormalMappingShader::fragmentShader(const FragmentShaderInput& fragmen
 glm::vec3 NormalMappingShader::calculateNormal(const FragmentShaderInput& fragment,
     const ShaderContext& context) const {
 
+    if (!context.useNormalMap || context.normalMap == nullptr) {
+        return glm::normalize(fragment.worldNorm);
+    }
+
     switch (normalMode) {
     case VERTEX_NORMALS:
         return glm::normalize(fragment.worldNorm);
