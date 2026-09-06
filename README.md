@@ -38,16 +38,18 @@
   - 利用屏幕空间纹理坐标梯度（`dTdx`, `dTdy`）动态计算 LOD（细节层次），有效抑制远处走样
 
 <!-- Mipmap 对比 -->
-<p align="center" style="display: flex; justify-content: center; gap: 5%;">
-  <span style="display: flex; flex-direction: column; align-items: center; width: 45%;">
-    <img src="picture/Mipmap_off.jpg" width="100%" alt="Mipmap：关">
+<div align="center">
+  <div style="display: inline-block; width: 45%; margin: 0 2%; vertical-align: top;">
+    <img src="picture/Mipmap_off.jpg" style="width: 100%;" alt="Mipmap：关">
+    <br>
     <b>Mipmap：关</b>
-  </span>
-  <span style="display: flex; flex-direction: column; align-items: center; width: 45%;">
-    <img src="picture/Mipmap_on.jpg" width="100%" alt="Mipmap：开">
+  </div>
+  <div style="display: inline-block; width: 45%; margin: 0 2%; vertical-align: top;">
+    <img src="picture/Mipmap_on.jpg" style="width: 100%;" alt="Mipmap：开">
+    <br>
     <b>Mipmap：开</b>
-  </span>
-</p>
+  </div>
+</div>
 
 - **法线贴图与切线空间**
   - 构建 TBN 矩阵，将切线空间法线转换到世界空间
@@ -55,32 +57,36 @@
   - Gram-Schmidt 正交化确保 TBN 矩阵稳定性
 
 <!-- 法线贴图对比 -->
-<p align="center" style="display: flex; justify-content: center; gap: 5%;">
-  <span style="display: flex; flex-direction: column; align-items: center; width: 45%;">
-    <img src="picture/NormalMap_off.jpg" width="100%" alt="仅顶点法线（无细节）">
+<div align="center">
+  <div style="display: inline-block; width: 45%; margin: 0 2%; vertical-align: top;">
+    <img src="picture/NormalMap_off.jpg" style="width: 100%;" alt="仅顶点法线（无细节）">
+    <br>
     <b>仅顶点法线（无细节）</b>
-  </span>
-  <span style="display: flex; flex-direction: column; align-items: center; width: 45%;">
-    <img src="picture/NormalMap_on.jpg" width="100%" alt="法线贴图（细节丰富）">
+  </div>
+  <div style="display: inline-block; width: 45%; margin: 0 2%; vertical-align: top;">
+    <img src="picture/NormalMap_on.jpg" style="width: 100%;" alt="法线贴图（细节丰富）">
+    <br>
     <b>法线贴图（细节丰富）</b>
-  </span>
-</p>
+  </div>
+</div>
 
 - **多重采样抗锯齿（MSAA）**
   - 支持 4x / 8x 采样，采用优化的旋转网格（Rotated Grid）子采样模式
   - 独立采样点深度测试，最终颜色解析（Resolve）平均输出
 
 <!-- MSAA 对比 -->
-<p align="center" style="display: flex; justify-content: center; gap: 5%;">
-  <span style="display: flex; flex-direction: column; align-items: center; width: 45%;">
-    <img src="picture/MSAA_off.jpg" width="100%" alt="MSAA：关">
+<div align="center">
+  <div style="display: inline-block; width: 45%; margin: 0 2%; vertical-align: top;">
+    <img src="picture/MSAA_off.jpg" style="width: 100%;" alt="MSAA：关">
+    <br>
     <b>MSAA：关</b>
-  </span>
-  <span style="display: flex; flex-direction: column; align-items: center; width: 45%;">
-    <img src="picture/MSAA_on.jpg" width="100%" alt="MSAA：8x">
+  </div>
+  <div style="display: inline-block; width: 45%; margin: 0 2%; vertical-align: top;">
+    <img src="picture/MSAA_on.jpg" style="width: 100%;" alt="MSAA：8x">
+    <br>
     <b>MSAA：8x</b>
-  </span>
-</p>
+  </div>
+</div>
 
 - **交互与控制**
   - 基于 SDL2 的窗口与输入管理
